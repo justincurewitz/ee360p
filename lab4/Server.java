@@ -7,9 +7,28 @@ import java.net.*;
 import java.util.ArrayList;
 
 public class Server {
-  //static HashMap<String,Integer> inv = new HashMap<String,Integer>();
-  //static HashMap<Integer,String> orderID = new HashMap<Integer,String>();
-  //DatagramSocket ds;
+  InetAddress ip_address;
+  String ip_string;
+  int port_number;
+  public Server(InetAddress ip_address, int port_number){
+	  this.ip_address = ip_address;
+	  this.port_number = port_number;
+  }
+  public Server(String ip_string, int port_number){
+	InetAddress addr;
+	try {
+		addr = InetAddress.getByName(ip_string);
+		this.ip_address = addr;
+		this.ip_string = ip_string;
+		this.port_number = port_number;
+	} catch (UnknownHostException e) {
+		e.printStackTrace();
+	}
+	  
+  }
+  public String toString(){
+	  return ip_string + ":" + port_number;
+  }
   
   public static void main (String[] args) throws Exception{
     int tcpPort;

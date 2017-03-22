@@ -1,31 +1,54 @@
 import java.util.Scanner;
 import java.net.*;
 import java.io.*;
+import java.util.ArrayList;
+
+
 
 public class Client {
-    static DatagramSocket ds;
+   static DatagramSocket ds;
 
   public static void main (String[] args) throws Exception {
+	  
+	  
+	  
     String hostAddress;
-    int tcpPort;
-    int udpPort;
-    boolean TCP = true;
     InetAddress address;
-    int newUDP = 0;
+ 
+    boolean invalid_arguments = false;
+    ArrayList<Server> servers = new ArrayList<Server>();
+    Scanner sc = new Scanner(System.in);
     
-    if (args.length != 3) {
-      System.out.println("ERROR: Provide 3 arguments");
-      System.out.println("\t(1) <hostAddress>: the address of the server");
-      System.out.println("\t(2) <tcpPort>: the port number for TCP connection");
-      System.out.println("\t(3) <udpPort>: the port number for UDP connection");
+    int n = Integer.parseInt(args[0]);
+    while(n != 0){
+    	if(sc.hasNextLine()){
+    		String server_string = sc.nextLine();
+    		String ip_string = server_string.split(":")[0];
+    		String port_string = server_string.split(":")[1];
+    		int port = Integer.parseInt(port_string);
+    		Server s = new Server(ip_string,port);
+    		servers.add(s);
+    	}
+    	n--;
+    }
+    
+    if (invalid_arguments) {
+      System.out.println("ERROR: Provide n + 1 arguments");
+      System.out.println("\t(1) <n>: the number of servers present");
+      System.out.println("\t(2) <ip-address>:<port-number>");
+      System.out.println("\t(3) <ip-address>:<port-number>");
+      System.out.println("\t(4) repeat until n servers");
       System.exit(-1);
     }
+    for(Server x: servers) System.out.println(x);
+    /*
+    
+    
 
     hostAddress = args[0];
     tcpPort = Integer.parseInt(args[1]);
     udpPort = Integer.parseInt(args[2]);
 	address = InetAddress.getByName(hostAddress);
-    Scanner sc = new Scanner(System.in);
     Socket clientSocket;
     clientSocket = new Socket(hostAddress,tcpPort);
     System.out.println("Connected");
@@ -84,6 +107,8 @@ public class Client {
     clientSocket.close();
     ds.close();
     System.out.println("Client Exited");
+    
+    */
   }
 }
 //else if (tokens[0].equals("purchase")) {
