@@ -131,6 +131,7 @@ public Server(String ip_string, int port_number, Linker initComm){
 	init();
     /*Attempting to receive new connection*/
     while(true){
+    	System.out.println("Awaiting new connection request");
     	Socket cSocket = ss.accept();
     	System.out.println("New Connection");
     	new TCPServerThread(cSocket, it).start();

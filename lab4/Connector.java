@@ -11,7 +11,6 @@ public class Connector {
 		dataOut = new ObjectOutputStream[numNeigh];
 		int localport = getLocalPort(myId);
 		listener = new ServerSocket(localport);
-		
 		for(String neighbor: neighbors){
 			System.out.println("We are currently connecting to: " +neighbor);
 		}

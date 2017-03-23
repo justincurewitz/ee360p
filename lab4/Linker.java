@@ -14,7 +14,7 @@ public class Linker implements MsgHandler {
 		if (!Topology.readNeighbors(myId, neighbors)) 
 			Topology.setComplete(myId, neighbors, Integer.parseInt(args[2]));
 		n = neighbors.size() + 1;
-		prop.loadFromXML(new FileInputStream("LinkerProp.xml"));
+		prop.loadFromXML(new FileInputStream("LinkerProp.xml")); // not sure what this does. 
 		connector = new Connector();
 		connector.Connect(basename, myId, neighbors);
 	}

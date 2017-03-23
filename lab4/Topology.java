@@ -5,7 +5,7 @@ public class Topology {
 	public static boolean readNeighbors(int myId,List<String> neighbors) {
 		System.out.println("Reading topology" + myId);
 		try {
-			Scanner sc = new Scanner(new FileReader("topology" + myId));
+			Scanner sc = new Scanner(new FileReader("topology" + myId + ".txt"));
 			while (sc.hasNext()) {
 				String neighbor = sc.nextLine();
 				neighbors.add(neighbor);
