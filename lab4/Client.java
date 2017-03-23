@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 
 public class Client {
-  static ArrayList<Server> servers = new ArrayList<Server>();
+  static ArrayList<String> servers = new ArrayList<String>();
   static Socket clientSocket;
   /*
    * This method attempts to connect to the nearest (determined by order in arraylist) server
@@ -16,9 +16,9 @@ public class Client {
    * */
   public static void connectToNearestServer() throws IOException {
 	  int counter = 1;
-	  for(Server s: servers){
-		  String hostAddress = s.ip_string;
-		  int tcpPort = s.port_number;
+	  for(String s: servers){
+		  String hostAddress = s.split(":")[0];
+		  int tcpPort = Integer.parseInt(s.split(":")[1]);
 		  InetAddress address = InetAddress.getByName(hostAddress);
 		  clientSocket = new Socket(address,tcpPort); // static variable gets rewritten every time we connect to new server
 		  InetSocketAddress sa = new InetSocketAddress(address,tcpPort);
@@ -48,11 +48,7 @@ public class Client {
     while(n != 0){
     	if(sc.hasNextLine()){
     		String server_string = sc.nextLine();
-    		String ip_string = server_string.split(":")[0];
-    		String port_string = server_string.split(":")[1];
-    		int port = Integer.parseInt(port_string);
-    		Server s = new Server(ip_string,port);
-    		servers.add(s);
+    		servers.add(server_string);
     	}
     	n--;
     }
@@ -65,7 +61,7 @@ public class Client {
       System.out.println("\t(4) repeat until n servers");
       System.exit(-1);
     }
-    for(Server x: servers) System.out.println(x);
+    for(String x: servers) System.out.println(x);
     
     while(sc.hasNextLine()){
     	/*
