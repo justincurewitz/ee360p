@@ -1,19 +1,16 @@
-import java.net.DatagramSocket;
+package lab4;
+
 import java.net.Socket;
 import java.io.*;
 public class TCPServerThread extends Thread {
 	BufferedReader in;
 	Socket s;
 	DataOutputStream out;
-	DatagramSocket ds;
 	Inventory iv;
-	int udpPort;
 	
-	public TCPServerThread(Socket s, DatagramSocket ds, Inventory iv, int udpPort) {
+	public TCPServerThread(Socket s, Inventory iv) {
 		this.s = s;
-		this.ds = ds;
 		this.iv = iv;
-		this.udpPort = udpPort;
 	}
 	
 	public void run() {
@@ -33,9 +30,9 @@ public class TCPServerThread extends Thread {
 			        	if(request[0].equals("T")){
 			        		//call tcp thread
 			        	} else {
-			        		UDP_Thread ut = new UDP_Thread(ds, iv);
-			        		ut.start();
-			        		out.writeInt(udpPort);
+//			        		UDP_Thread ut = new UDP_Thread(ds, iv);
+//			        		ut.start();
+//			        		out.writeInt(udpPort);
 			        		break;
 			        	}
 			        }
