@@ -1,4 +1,4 @@
-package lab4;
+//package lab4;
 
 import java.io.*;
 import java.net.*;
