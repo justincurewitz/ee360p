@@ -31,13 +31,18 @@ public class Client {
   }
 
   public static void main (String[] args) throws Exception {
+	  System.out.println("Welcome: Provide n + 1 arguments");
+      System.out.println("\t(1) <n>: the number of servers present");
+      System.out.println("\t(2) <ip-address>:<port-number>");
+      System.out.println("\t(3) <ip-address>:<port-number>");
+      System.out.println("\t(4) repeat until n servers specified");
     
  
     boolean invalid_arguments = false;
     
     Scanner sc = new Scanner(System.in);
     
-    int n = Integer.parseInt(args[0]);
+    int n = Integer.parseInt(sc.nextLine());
     while(n != 0){
     	if(sc.hasNextLine()){
     		String server_string = sc.nextLine();
