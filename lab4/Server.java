@@ -7,6 +7,7 @@
 import java.util.Scanner;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -91,12 +92,20 @@ public Server(String ip_string, int port_number, Linker initComm){
 	  System.out.println("Enter Configuration Data");
 	  int tempId = sc.nextInt();
 	  int tempN = sc.nextInt();
+	  System.out.println("Please enter the filepath as: topologyi.txt where i is your server-id");
 	  inventoryPath = sc.next();
 	  String topologyi = inventoryPath;
 	  Linker l = null;
 	  System.out.println("Enter " + tempN + " IPs");
 	    for(int i = 1; i <= tempN; i++){
 	    	String ip = sc.next();
+	    	try{
+	      	    PrintWriter writer = new PrintWriter(topologyi, "UTF-8");
+	      	    writer.println(ip);
+	      	    writer.close();
+	      	  } catch (IOException e) {
+	      	   e.printStackTrace();
+	      	  }
 	    	String[] ips = ip.split(":");
 	    	System.out.println(ips.length);
 			ServerIPs.add(ips[0]);
