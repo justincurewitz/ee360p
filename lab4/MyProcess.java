@@ -29,15 +29,16 @@ public class MyProcess implements MsgHandler {
 //		notifyAll();
 //		//if (app != null) app.executeMsg(m);		
 //	}
-	public void sendMsg(int destId, Object ... objects) {
-		comm.sendMsg(destId, objects);		
+	public void sendMsg(String i, Object ... objects) {
+		comm.sendMsg(i, objects);		
 	        //if (debug) System.out.println("Process "+ myId + " sends " + objects + " to " + destId);
 	}
-	public void sendMsg(List<Integer> destIds, Object... objects) {
-		for (int i : destIds)
-			if (i != myId)
+	public void sendMsg(List<String> destIds, Object... objects) {
+		for (String i : (destIds))
+			if (Integer.parseInt(i) != myId)
 				sendMsg(i, objects);
 	}	
+	
 	//public void broadcastMsg(String tag, int msg) {
         	//sendMsg(neighbors, tag, msg);
     	//}

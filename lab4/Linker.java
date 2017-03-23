@@ -68,4 +68,9 @@ public class Linker implements MsgHandler {
 	public List<String> getNeighbors() { return neighbors; }
 	public void close() { appFinished = true; connector.closeSockets(); }
 	public void turnPassive() {	}
+	@Override
+	public void sendMsg(String i, Object... objects) {
+		// TODO Auto-generated method stub
+		
+	}
 }
