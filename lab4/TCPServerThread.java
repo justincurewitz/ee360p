@@ -1,7 +1,8 @@
-package lab4;
+//package lab4;
 
 import java.net.Socket;
 import java.io.*;
+
 public class TCPServerThread extends Thread {
 	BufferedReader in;
 	Socket s;
@@ -11,14 +12,43 @@ public class TCPServerThread extends Thread {
 	public TCPServerThread(Socket s, Inventory iv) {
 		this.s = s;
 		this.iv = iv;
+		try {
+			in = new BufferedReader(new InputStreamReader(this.s.getInputStream()));
+			out = new DataOutputStream(this.s.getOutputStream());
+		}catch(IOException e){e.printStackTrace();}
 	}
 	
 	public void run() {
+		System.out.println("TCP Thread Started");
+		String c_str = "Client";
 		while(true){
 			try {
-				in = new BufferedReader(new InputStreamReader(this.s.getInputStream()));
-			    out = new DataOutputStream(this.s.getOutputStream());
-				String client_str;
+				String in_str = null;
+				if((in_str=in.readLine()) != null){
+					in_str = in_str.substring(1);
+					in_str = in_str.trim();
+					System.out.println(in_str);
+					System.out.println(in_str.equals(c_str));
+					System.out.println(in_str.length());
+					if(in_str.equals(c_str)){
+						System.out.println("");
+						Client();
+						break;
+					} else if (in_str.equals("Server")){
+						Server();
+					}
+				}
+			}catch (IOException e){e.printStackTrace();}
+		}
+	}
+	
+	private void Client() {
+		System.out.println("Started Client Function");
+		while(true){
+			try {
+				
+			    String client_str;
+				
 			    if ((client_str = in.readLine()) != null) {
 					String[] commands = {"purchase", "cancel", "search", "list"};
 			    	String request[] = client_str.split(" ");
@@ -53,6 +83,10 @@ public class TCPServerThread extends Thread {
 		try {
 			s.close();
 		}catch (IOException e){e.printStackTrace();}
+	}
+	
+	private void Server() {
+		System.out.println("Server Contact");
 	}
 
 }
