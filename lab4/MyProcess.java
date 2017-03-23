@@ -10,7 +10,7 @@ public class MyProcess implements MsgHandler {
 	public boolean debug = true;
 	public boolean appFinished = false;
 	//public Properties prop = new Properties();
-	public List<Integer> neighbors = new ArrayList<Integer>();	
+	public List<String> neighbors = new ArrayList<String>();	
 	public MyProcess(MsgHandler initComm)  {
 		comm = initComm;
 		myId = comm.getMyId();	       
@@ -52,7 +52,7 @@ public class MyProcess implements MsgHandler {
 	public static void println(String s) {
 		System.out.println(s);
 	}
-	public List<Integer> getNeighbors() { return comm.getNeighbors(); }
+	public List<String> getNeighbors() { return comm.getNeighbors(); }
 	public void close() {
 		comm.close();
 	}

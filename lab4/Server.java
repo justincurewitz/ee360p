@@ -33,7 +33,6 @@ public class Server extends MyProcess {
   static Server s; // each Server object has a reference to the server it creates
   static ArrayList<Integer> ServerPorts = new ArrayList<Integer>();
   static ArrayList<String> ServerIPs = new ArrayList<String>();
-  static String inventoryPath;
   static Inventory it;
   static ServerSocket ss;
   
@@ -89,14 +88,16 @@ public Server(String ip_string, int port_number, Linker initComm){
    * */
   public static void init() throws IOException{
 	  Scanner sc = new Scanner(System.in);
-	  System.out.println("Enter Configuration Data");
+	  System.out.println("Enter server-id: ");
 	  int tempId = sc.nextInt();
+	  System.out.println("Enter number of servers n:");
 	  int tempN = sc.nextInt();
 	  System.out.println("Please enter the filepath as: topologyi.txt where i is your server-id");
-	  inventoryPath = sc.next();
+	  String inventoryPath = sc.next();
 	  String topologyi = inventoryPath;
 	  Linker l = null;
 	  System.out.println("Enter " + tempN + " IPs");
+	  System.out.println("example format: 127.0.0.1:8000");
 	    for(int i = 1; i <= tempN; i++){
 	    	String ip = sc.next();
 	    	try{
@@ -119,7 +120,7 @@ public Server(String ip_string, int port_number, Linker initComm){
 	    	s = new Server(ips[0],Integer.parseInt(ips[1]),l);
 	    }
 	  it = new Inventory(inventoryPath);
-      ss = new ServerSocket(ServerPorts.get(s.getMyId()-1));
+      ss = new ServerSocket(ServerPorts.get(0)); // only get the first element right now
   }
   
   public String toString(){
@@ -128,7 +129,6 @@ public Server(String ip_string, int port_number, Linker initComm){
   
   public static void main (String[] args) throws Exception{
 	init();
-	  
     /*Attempting to receive new connection*/
     while(true){
     	Socket cSocket = ss.accept();

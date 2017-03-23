@@ -6,7 +6,7 @@ public class Linker implements MsgHandler {
 	MsgHandler app = null;// upper layer
 	MsgHandler comm = null;// lower layer
 	public boolean appFinished = false;
-	public List<Integer> neighbors = new ArrayList<Integer>();	
+	public List<String> neighbors = new ArrayList<String>();	
 	public Properties prop = new Properties();
 	public Linker (String args[]) throws Exception { 
 		String basename = args[0];
@@ -18,18 +18,18 @@ public class Linker implements MsgHandler {
 		connector = new Connector();
 		connector.Connect(basename, myId, neighbors);
 	}
-	public Linker(String baseName, int id, int numProc) throws Exception{
+	public Linker(String ip_string, int id, int numProc) throws Exception{
 		myId = id;
 		n = numProc;
 		// reads the neighbors from a file called topologyi
 		Topology.readNeighbors(myId, neighbors);
 		connector = new Connector();
-		connector.Connect(baseName, myId, neighbors);
+		connector.Connect(ip_string, myId, neighbors);
 	}
 	public void init(MsgHandler app){
 		this.app = app;	
-		for (int pid : neighbors)
-			(new ListenerThread(pid, this)).start();		    	
+		for (String pid : neighbors)
+			(new ListenerThread(Integer.parseInt(pid), this)).start();		    	
 	}
 	public void sendMsg(int destId, Object ... objects) {	
 			int j = neighbors.indexOf(destId);
@@ -65,7 +65,7 @@ public class Linker implements MsgHandler {
 	}
 	public synchronized int getMyId() { return myId; }
 	public Properties getProp() { return prop;}
-	public List<Integer> getNeighbors() { return neighbors; }
+	public List<String> getNeighbors() { return neighbors; }
 	public void close() { appFinished = true; connector.closeSockets(); }
 	public void turnPassive() {	}
 }
