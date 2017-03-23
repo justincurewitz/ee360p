@@ -31,12 +31,13 @@ public class Server extends MyProcess {
   InetAddress ip_address;
   String ip_string;
   int port_number;
-  ArrayList<Server> server_list = new ArrayList<Server>();
-  static Server s; // each Server object has a reference to the server it creates
+  static ArrayList<Server> server_list = new ArrayList<Server>();
+   // each Server object has a reference to the server it creates
   static ArrayList<Integer> ServerPorts = new ArrayList<Integer>();
   static ArrayList<String> ServerIPs = new ArrayList<String>();
   static Inventory it;
   static ServerSocket ss;
+  
   
   /**
    * This server constructor takes in 
@@ -119,7 +120,8 @@ public Server(String ip_string, int port_number, Linker initComm){
 	    		// TODO Auto-generated catch block
 	    		e.printStackTrace();
 	    	  }
-	    	s = new Server(ips[0],Integer.parseInt(ips[1]),l);
+	    	Server s = new Server(ips[0],Integer.parseInt(ips[1]),l);
+	    	server_list.add(s);
 	    }
 	  it = new Inventory(inventoryPath);
       ss = new ServerSocket(ServerPorts.get(0)); // only get the first element right now

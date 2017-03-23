@@ -18,9 +18,12 @@ public class Client {
 	  int counter = 1;
 	  for(String s: servers){
 		  String hostAddress = s.split(":")[0];
+		  System.out.println(hostAddress);
 		  int tcpPort = Integer.parseInt(s.split(":")[1]);
+		  System.out.println(tcpPort);
 		  InetAddress address = InetAddress.getByName(hostAddress);
-		  clientSocket = new Socket(address,tcpPort); // static variable gets rewritten every time we connect to new server
+		  clientSocket = new Socket();
+		  //clientSocket = new Socket(address,tcpPort); // static variable gets rewritten every time we connect to new server
 		  InetSocketAddress sa = new InetSocketAddress(address,tcpPort);
 		  try{
 			  clientSocket.connect(sa,100);
@@ -62,12 +65,13 @@ public class Client {
       System.exit(-1);
     }
     for(String x: servers) System.out.println(x);
-    
+    /*
+	 * Try to connect to nearest server
+	 * */
+	
+    connectToNearestServer();
     while(sc.hasNextLine()){
-    	/*
-    	 * Try to connect to nearest server
-    	 * */
-    	connectToNearestServer();
+    	
     	
     	/*
     	 * Handle like it's one server
