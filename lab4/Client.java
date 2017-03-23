@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 public class Client {
   static ArrayList<Server> servers = new ArrayList<Server>();
+  static Socket clientSocket;
   /*
    * This method attempts to connect to the nearest (determined by order in arraylist) server
    * If the nearest server does not respond within 100 ms, then move onto the next server. 
@@ -17,7 +18,7 @@ public class Client {
 		  String hostAddress = s.ip_string;
 		  int tcpPort = s.port_number;
 		  InetAddress address = InetAddress.getByName(hostAddress);
-		  Socket clientSocket = new Socket(address,tcpPort);
+		  clientSocket = new Socket(address,tcpPort); // static variable gets rewritten every time we connect to new server
 		  InetSocketAddress sa = new InetSocketAddress(address,tcpPort);
 		  try{
 			  clientSocket.connect(sa,100);
@@ -74,90 +75,39 @@ public class Client {
         if (tokens[0].equals("quit")){
         	break;
         }else if (tokens[0].equals("purchase")) {
-        
-//		   DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
-//		   BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-//		   outToServer.writeBytes(tokens[0] + " " + tokens[1] + " " + tokens[2] + " "  + tokens[3] + '\n');
-//		   String modifiedSentence = inFromServer.readLine();
-//		   System.out.println("FROM SERVER: " + modifiedSentence);
-//		   clientSocket.close();
+		   DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+		   BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+		   outToServer.writeBytes(tokens[0] + " " + tokens[1] + " " + tokens[2] + " "  + tokens[3] + '\n');
+		   String modifiedSentence = inFromServer.readLine();
+		   System.out.println("FROM SERVER: " + modifiedSentence);
+		   clientSocket.close();
 	   } else if (tokens[0].equals("cancel")) {
-//		   DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
-//		   BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-//		   outToServer.writeBytes("cancel" + '\n');
-//		   String modifiedSentence = inFromServer.readLine();
-//		   System.out.println("FROM SERVER: " + modifiedSentence);
-//		   clientSocket.close();
+		   DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+		   BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+		   outToServer.writeBytes("cancel" + '\n');
+		   String modifiedSentence = inFromServer.readLine();
+		   System.out.println("FROM SERVER: " + modifiedSentence);
+		   clientSocket.close();
 	   } else if (tokens[0].equals("search")) {
-
-	   } else if (tokens[0].equals("list")) {
+		   DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+	       BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+	       outToServer.writeUTF(cmd+"\n");
+	    	  if (tokens[0].equals("search") || tokens[0].equals("list")){
+	    		  String reply;
+	    		  while ((reply = inFromServer.readLine()) != null){
+	    			  if (reply.equals("quit")){break;}
+	    			  System.out.println(reply);
+	    		  }
+	    	  } else {
+		    	  String modifiedSentence = inFromServer.readLine();
+				  System.out.println("FROM SERVER: " + modifiedSentence);
+	    	  }
+			  clientSocket.close();
 
 	   } else {
 	   System.out.println("ERROR: No such command");
 	   }
-    	
     }
-    /*
-	address = InetAddress.getByName(hostAddress);
-    Socket clientSocket;
-    clientSocket = new Socket(hostAddress,tcpPort);
-    System.out.println("Connected");
-    while(sc.hasNextLine()) {
-  	  System.out.println("Enter Next Command");
-      String cmd = sc.nextLine();
-      String[] tokens = cmd.split(" ");
-      if (tokens[0].equals("quit")){break;}
-      else if (tokens[0].equals("setmode")) {
-        // TODO: set the mode of communication for sending commands to the server 
-        // and display the name of the protocol that will be used in future
-    	  DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-    	  DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-    	  if (tokens[1].equals("U")){
-    		if (TCP) {
-	    		TCP = false;
-	      	  	ds = new DatagramSocket(udpPort);
-	      	  	out.writeUTF("setmode U \n");
-	      	  	newUDP = in.readInt();
-    		}
-    	  } else if (tokens[1].equals("T")){
-    		  if(!TCP){
-	    		  TCP = true;
-	    		  clientSocket = new Socket(hostAddress,tcpPort);
-    		  }
-    	  }
-    	  //new UDP_Client(command, udpPort, address, newUdpPort);
-      } 
-      else if (TCP){
-    	  DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
-    	  BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-    	  outToServer.writeUTF(cmd+"\n");
-    	  if (tokens[0].equals("search") || tokens[0].equals("list")){
-    		  String reply;
-    		  while ((reply = inFromServer.readLine()) != null){
-    			  if (reply.equals("quit")){break;}
-    			  System.out.println(reply);
-    		  }
-    	  } else {
-	    	  String modifiedSentence = inFromServer.readLine();
-			  System.out.println("FROM SERVER: " + modifiedSentence);
-    	  }
-		  //clientSocket.close();
-      } else {
-    	  try {
-			byte[] buf = cmd.getBytes();
-			DatagramPacket dp = new DatagramPacket(buf, buf.length, address, newUDP);
-			ds.send(dp);
-			buf = new byte[1024];
-			dp = new DatagramPacket(buf, buf.length);
-			ds.receive(dp);
-			System.out.println(new String(buf));
-    	  } catch(IOException e){e.printStackTrace();}
-      }
-    }
-    clientSocket.close();
-    ds.close();
     System.out.println("Client Exited");
-    
-    */
   }
 }
