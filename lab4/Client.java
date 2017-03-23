@@ -6,17 +6,34 @@ import java.util.ArrayList;
 
 
 public class Client {
-   static DatagramSocket ds;
+  static ArrayList<Server> servers = new ArrayList<Server>();
+  /*
+   * This method attempts to connect to the nearest (determined by order in arraylist) server
+   * If the nearest server does not respond within 100 ms, then move onto the next server. 
+   * */
+  public static void connectToNearestServer() throws IOException {
+	  int counter = 1;
+	  for(Server s: servers){
+		  String hostAddress = s.ip_string;
+		  int tcpPort = s.port_number;
+		  InetAddress address = InetAddress.getByName(hostAddress);
+		  Socket clientSocket = new Socket(address,tcpPort);
+		  InetSocketAddress sa = new InetSocketAddress(address,tcpPort);
+		  try{
+			  clientSocket.connect(sa,100);
+			  break;
+		  } catch(SocketTimeoutException e){
+			  System.out.println("Server" + counter + "timed out, attempting to connect to next nearest server");
+		  }  
+	  }
+	  
+  }
 
   public static void main (String[] args) throws Exception {
-	  
-	  
-	  
-    String hostAddress;
-    InetAddress address;
+    
  
     boolean invalid_arguments = false;
-    ArrayList<Server> servers = new ArrayList<Server>();
+    
     Scanner sc = new Scanner(System.in);
     
     int n = Integer.parseInt(args[0]);
@@ -41,13 +58,46 @@ public class Client {
       System.exit(-1);
     }
     for(Server x: servers) System.out.println(x);
-    /*
     
-    
+    while(sc.hasNextLine()){
+    	/*
+    	 * Try to connect to nearest server
+    	 * */
+    	connectToNearestServer();
+    	
+    	/*
+    	 * Handle like it's one server
+    	 * */
+    	System.out.println("Enter Next Command");
+    	String cmd = sc.nextLine();
+        String[] tokens = cmd.split(" ");
+        if (tokens[0].equals("quit")){
+        	break;
+        }else if (tokens[0].equals("purchase")) {
+        
+//		   DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+//		   BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+//		   outToServer.writeBytes(tokens[0] + " " + tokens[1] + " " + tokens[2] + " "  + tokens[3] + '\n');
+//		   String modifiedSentence = inFromServer.readLine();
+//		   System.out.println("FROM SERVER: " + modifiedSentence);
+//		   clientSocket.close();
+	   } else if (tokens[0].equals("cancel")) {
+//		   DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+//		   BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+//		   outToServer.writeBytes("cancel" + '\n');
+//		   String modifiedSentence = inFromServer.readLine();
+//		   System.out.println("FROM SERVER: " + modifiedSentence);
+//		   clientSocket.close();
+	   } else if (tokens[0].equals("search")) {
 
-    hostAddress = args[0];
-    tcpPort = Integer.parseInt(args[1]);
-    udpPort = Integer.parseInt(args[2]);
+	   } else if (tokens[0].equals("list")) {
+
+	   } else {
+	   System.out.println("ERROR: No such command");
+	   }
+    	
+    }
+    /*
 	address = InetAddress.getByName(hostAddress);
     Socket clientSocket;
     clientSocket = new Socket(hostAddress,tcpPort);
@@ -111,30 +161,3 @@ public class Client {
     */
   }
 }
-//else if (tokens[0].equals("purchase")) {
-//// TODO: send appropriate command to the server and display the
-//// appropriate responses form the server
-//DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
-//BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-//outToServer.writeBytes(tokens[0] + " " + tokens[1] + " " + tokens[2] + " "  + tokens[3] + '\n');
-//String modifiedSentence = inFromServer.readLine();
-//System.out.println("FROM SERVER: " + modifiedSentence);
-//clientSocket.close();
-//} else if (tokens[0].equals("cancel")) {
-//// TODO: send appropriate command to the server and display the
-//// appropriate responses form the server
-//DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
-//BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-//outToServer.writeBytes("cancel" + '\n');
-//String modifiedSentence = inFromServer.readLine();
-//System.out.println("FROM SERVER: " + modifiedSentence);
-//clientSocket.close();
-//} else if (tokens[0].equals("search")) {
-//// TODO: send appropriate command to the server and display the
-//// appropriate responses form the server
-//} else if (tokens[0].equals("list")) {
-//// TODO: send appropriate command to the server and display the
-//// appropriate responses form the server
-//} else {
-//System.out.println("ERROR: No such command");
-//}
