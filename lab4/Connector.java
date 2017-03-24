@@ -18,34 +18,51 @@ public class Connector {
 		/* register my name in the name server */
 		myNameclient.insertName(basename + myId, (InetAddress.getLocalHost()) .getHostName(), localport);
 		/* accept connections from all the smaller processes */
+	}
+	int getLocalPort(int id) {return Symbols.ServerPort + 20 + id;	}
+	public void broadcastMessagesToNeighbors(Socket s, List<Integer> neighbors,int myId,int destId, Object ... objects) throws IOException,ClassNotFoundException{
+		for (int neighbor : neighbors) {
+			InetSocketAddress addr = null;
+			int i = neighbors.indexOf(neighbor);
+			link[i] = new Socket(addr.getHostName(), addr.getPort());
+			dataOut[i] = new ObjectOutputStream(link[i].getOutputStream());
+			/* send a hello message to P_i */
+			dataOut[i].writeObject(new Integer(myId));
+			dataOut[i].writeObject(new String("inventory_state"));
+			int j = neighbors.indexOf(destId);
+			try {
+				LinkedList<Object> objectList = Util.getLinkedList(objects);
+				ObjectOutputStream os = dataOut[j];
+				os.writeObject(Integer.valueOf(objectList.size()));
+				for (Object object : objectList) 
+					os.writeObject(object);
+				os.flush();
+			} catch (IOException e) {System.out.println(e);	
+			}
+			// change what we send out
+			dataOut[i].flush();
+			//dataIn[i]=new ObjectInputStream(link[i].getInputStream());
+		}
+		
+	}
+	
+	public ObjectInputStream[] getMessagesFromNeighbors(Socket s, List<Integer> neighbors) throws IOException, ClassNotFoundException{
 		for(int neighbor: neighbors){
-			Socket s = listener.accept();
+			s = listener.accept();
 			InputStream is = s.getInputStream();
 			ObjectInputStream din = new ObjectInputStream(is);
 			Integer hisId = (Integer) din.readObject();
 			int i = neighbors.indexOf(hisId);
 			String tag = (String) din.readObject();
-			if (tag.equals("hello")) {
+			if (tag.equals("inventory_state")) {
 				link[i] = s;
 				dataIn[i] = din;
-				dataOut[i] = new ObjectOutputStream(s.getOutputStream()); 
+				//dataOut[i] = new ObjectOutputStream(s.getOutputStream()); // we dont need output here
 		    }
 			
 		}
-		
-		for (int neighbor : neighbors) {
-				InetSocketAddress addr = null;
-				int i = neighbors.indexOf(neighbor);
-				link[i] = new Socket(addr.getHostName(), addr.getPort());
-				dataOut[i] = new ObjectOutputStream(link[i].getOutputStream());
-				/* send a hello message to P_i */
-				dataOut[i].writeObject(new Integer(myId));
-				dataOut[i].writeObject(new String("hello"));
-				dataOut[i].flush();
-				dataIn[i]=new ObjectInputStream(link[i].getInputStream());
-		}
+		return dataIn;
 	}
-	int getLocalPort(int id) {return Symbols.ServerPort + 20 + id;	}
 	public void closeSockets() {
 		try {
 			listener.close();
