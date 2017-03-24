@@ -21,21 +21,14 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 
-public class Server extends MyProcess {
-  /*
-   * Variables for Lamport
-   * */
-  int numAcks;
-  Queue<Timestamp> requestQueue;
-  LamportClock c;
-  int myId;
+public class Server  {
+  
   /*
    * Variables for Server
    * */
   InetAddress ip_address;
   String ip_string;
   int port_number;
-  Inventory iv;
   static ArrayList<Server> server_list = new ArrayList<Server>();
   private ArrayList<RemoteInventory> inventories = new ArrayList<RemoteInventory>();
    // each Server object has a reference to the server it creates
@@ -43,6 +36,7 @@ public class Server extends MyProcess {
   static ArrayList<String> ServerIPs = new ArrayList<String>();
   static Inventory it;
   static ServerSocket ss;
+  int myId;
   
   
   /**
@@ -52,16 +46,6 @@ public class Server extends MyProcess {
    * */
 @SuppressWarnings("unchecked")
 public Server(InetAddress ip_address, int port_number, Linker initComm){
-	  // Initialization for Lamport
-	  super(initComm);
-	  c = new LamportClock(); 
-	  
-	  requestQueue= new PriorityQueue<Timestamp>(initComm.n,new Comparator<Timestamp>() {
-			public int compare(Timestamp a, Timestamp b) {
-				return Timestamp.compare(a, b);
-			}
-		} );
-	  numAcks = 0;
 	  // Initialization for our code
 	  this.ip_address = ip_address;
 	  this.port_number = port_number;
@@ -73,13 +57,7 @@ public Server(InetAddress ip_address, int port_number, Linker initComm){
    * @param int port_number: the port number from console
    * */
  @SuppressWarnings( "unchecked")
-public Server(String ip_string, int port_number, Linker initComm){
-	super(initComm);
-	requestQueue= new PriorityQueue<Timestamp>(initComm.n,new Comparator<Timestamp>() {
-		public int compare(Timestamp a, Timestamp b) {
-			return Timestamp.compare(a, b);
-		}
-	} );
+public Server(String ip_string, int port_number){
 	InetAddress addr;
 	try {
 		addr = InetAddress.getByName(ip_string);
@@ -91,26 +69,17 @@ public Server(String ip_string, int port_number, Linker initComm){
 	}
 	//System.setProperties(java.rmi.server.hostname, "127.0.0.1");
 	//This block instantiates the remote object
-	iv = new Inventory("inventory.txt");
-	try {
-		RI ri = new RI(iv, myId);
-		String ri_name = "Remote"+this.myId;
-		Registry rg = LocateRegistry.createRegistry(1099);
-		rg.bind(ri_name, ri);
-		System.out.println(ri_name);
-	}catch (Exception e) {
-		System.out.println("Failed to create remote inventory");
-		e.printStackTrace();
-	}
+	
 	  
   }
   /*
    * This function gets called whenever a new Server is created
    * 
    * */
-  public static void init() throws IOException{
+  public static int init() throws IOException{
 	  Scanner sc = new Scanner(System.in);
 	  System.out.println("Enter server-id: ");
+	  System.out.println("server id n should indicate the nth server");
 	  int tempId = sc.nextInt();
 	  tempId = 1;
 	  System.out.println("Enter number of servers n:");
@@ -120,15 +89,25 @@ public Server(String ip_string, int port_number, Linker initComm){
 	  String inventoryPath = sc.next();
 	  inventoryPath = "topology1.txt";
 	  String topologyi = inventoryPath;
-	  Linker l = null;
 	  System.out.println("Enter " + tempN + " IPs");
 	  System.out.println("example format: 127.0.0.1:8000");
+	  Inventory iv = new Inventory("inventory.txt");
+		try {
+			RI ri = new RI(iv, tempId);
+			String ri_name = "Remote"+ tempId;
+			Registry rg = LocateRegistry.createRegistry(1099);
+			rg.bind(ri_name, ri);
+			System.out.println(ri_name);
+		}catch (Exception e) {
+			System.out.println("Failed to create remote inventory");
+			e.printStackTrace();
+		}
 	    for(int i = 1; i <= tempN; i++){
 	    	String ip = sc.next();
 	    	ip = "127.0.0.1:8000";
 	    	try{
 	      	    PrintWriter writer = new PrintWriter(topologyi, "UTF-8");
-	      	    writer.println(ip);
+	      	    writer.println(tempId);
 	      	    writer.close();
 	      	  } catch (IOException e) {
 	      	   e.printStackTrace();
@@ -137,17 +116,15 @@ public Server(String ip_string, int port_number, Linker initComm){
 	    	System.out.println(ips.length);
 			ServerIPs.add(ips[0]);
 	    	ServerPorts.add(Integer.parseInt(ips[1]));
-	    	try {
-	    		l = new Linker(ips[0], tempId,tempN,Integer.parseInt(ips[1]));
-	    	  } catch (Exception e) {
-	    		// TODO Auto-generated catch block
-	    		e.printStackTrace();
-	    	  }
-	    	Server s = new Server(ips[0],Integer.parseInt(ips[1]),l);
-	    	server_list.add(s);
+	    	Server s = new Server(ips[0],Integer.parseInt(ips[1]));
+	    	if(i == tempId){
+	    		s.myId = tempId; // now every server should be assigned an ID
+	    	}
+	    	server_list.add(s); 
 	    }
 	  it = new Inventory(inventoryPath);
       ss = new ServerSocket(ServerPorts.get(0)); // only get the first element right now
+      return tempId;
   }
   
   public String toString(){
@@ -155,13 +132,13 @@ public Server(String ip_string, int port_number, Linker initComm){
   }
   
   public static void main (String[] args) throws Exception{
-	init();
+	int generatedServerID = init();
     /*Attempting to receive new connection*/
     while(true){
     	System.out.println("Awaiting new connection request");
     	Socket cSocket = ss.accept();
     	System.out.println("New Connection at port:" + cSocket.getPort());
-    	new TCPServerThread(cSocket, it,server_list).start();
+    	new TCPServerThread(cSocket,generatedServerID, it,server_list).start();
     }
   }
   
