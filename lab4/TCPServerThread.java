@@ -29,20 +29,31 @@ public class TCPServerThread extends Thread {
 	  public void requestInventoryAccess(Timestamp timestamp) throws InterruptedException{
 		  c.tick();
 		  requestQueue.add(new Timestamp(c.getValue(), myId));
-		  sendMsg(neighbors, "request", c.getValue());
+		  try {
+			sendMsg(neighbors, "request", c.getValue());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		  numAcks = 0;
 		  while ((requestQueue.peek().pid != myId) || (numAcks < neighbors.size()-1))
 				wait();
 	  }
-	  private void sendMsg(ArrayList<Server> neighbors, String string, int value) {
+	  private void sendMsg(ArrayList<Server> neighbors, String string, int value) throws IOException {
 		// TODO Auto-generated method stub
+		  for(Server s: neighbors){
+			  Socket soc = new Socket(s.ip_address,s.port_number);
+			  DataOutputStream outToServer = new DataOutputStream(soc.getOutputStream());
+			  out.writeUTF("Client\n");
+			  out.writeUTF(string + value);
+		  }
 		
 	}
-	public void finishedUsingInventory(){
+	public void finishedUsingInventory() throws IOException{
 		  requestQueue.remove();
 		  sendMsg(neighbors, "release", c.getValue());
 	  }
-	  public synchronized void handleMsg(Msg m, int src, String tag) {
+	  public synchronized void handleMsg(Msg m, int src, String tag) throws IOException {
 			int timeStamp = m.getMessageInt();
 			c.receiveAction(src, timeStamp);
 			if (tag.equals("request")) {
@@ -57,9 +68,15 @@ public class TCPServerThread extends Thread {
 				numAcks++;
 			notifyAll();
 		}
-	
-	private void sendMsg(String string, int dest, int value) {
-		// TODO Auto-generated method stub
+	/*
+	 * This is broken needs dest to be resolved to the right thing
+	 * 
+	 * */
+	private void sendMsg(String string, int dest, int value) throws IOException {
+			  Socket soc = new Socket(s.getInetAddress(), dest);
+			  DataOutputStream outToServer = new DataOutputStream(soc.getOutputStream());
+			  out.writeUTF("Client\n");
+			  out.writeUTF(string + value);
 		
 	}
 	public void run() {
