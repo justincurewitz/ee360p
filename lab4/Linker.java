@@ -1,4 +1,7 @@
 import java.util.*; import java.io.*;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
+import java.net.UnknownHostException;
 public class Linker implements MsgHandler {
 	public int myId;	
 	public int n; // number of neighbors including myself
@@ -8,29 +11,51 @@ public class Linker implements MsgHandler {
 	public boolean appFinished = false;
 	public List<String> neighbors = new ArrayList<String>();	
 	public Properties prop = new Properties();
+	MulticastSocket multisocket;
+	String ipstr;
+	int port;
 	public Linker (String args[]) throws Exception { 
-		String basename = args[0];
-		myId = Integer.parseInt(args[1]);
-		if (!Topology.readNeighbors(myId, neighbors)) 
-			Topology.setComplete(myId, neighbors, Integer.parseInt(args[2]));
-		n = neighbors.size() + 1;
-		prop.loadFromXML(new FileInputStream("LinkerProp.xml")); // not sure what this does. 
-		connector = new Connector();
-		connector.Connect(basename, myId, neighbors);
+		super();
 	}
-	public Linker(String ip_string, int id, int numProc) throws Exception{
+	public Linker(String ip_string, int id, int numProc,int port) throws Exception{
 		myId = id;
 		n = numProc;
+		ipstr = ip_string;
+		this.port = port;
 		// reads the neighbors from a file called topologyi
 		Topology.readNeighbors(myId, neighbors);
-		connector = new Connector();
-		connector.Connect(ip_string, myId, neighbors);
+		for(String s: neighbors){
+			String ip_addr = s.split(":")[0];
+			String port_str = s.split(":")[1];
+			InetAddress group = InetAddress.getByName(ip_addr);
+			multisocket = new MulticastSocket(Integer.parseInt(port_str));
+			connector = new Connector(multisocket);
+			connector.connect(group);
+		}
+		
 	}
 	public void init(MsgHandler app){
 		this.app = app;	
 		for (String pid : neighbors)
 			(new ListenerThread(Integer.parseInt(pid), this)).start();		    	
 	}
+	public Msg receiveMsg() {
+		try {
+			byte[] recvdMessage = connector.receiveMessage();
+			return new Msg(myId, recvdMessage);
+		} catch (Exception e) { System.out.println(e);
+			close(); return null;		
+		}
+
+	}
+	public void broadcastMsg(String s) throws UnknownHostException{
+		InetAddress group = InetAddress.getByName(ipstr);
+		connector.broadcastMessage(s, group, port);
+		
+	}
+	/*
+	 * Everything after this is only done to satisfy MsgHandler
+	 * */
 	public void sendMsg(int destId, Object ... objects) {	
 			int j = neighbors.indexOf(destId);
 			try {
@@ -42,16 +67,12 @@ public class Linker implements MsgHandler {
 				os.flush();
 			} catch (IOException e) {System.out.println(e);close();	}
 	}
+	
+	
 	public Msg receiveMsg(int fromId) {
-		int i = neighbors.indexOf(fromId);
 		try {
-			ObjectInputStream oi = connector.dataIn[i];
-			int numItems = ((Integer) oi.readObject()).intValue();
-			LinkedList<Object> recvdMessage = new LinkedList<Object>();
-			for (int j = 0; j < numItems; j++) 
-				recvdMessage.add(oi.readObject());
-			String tag = (String) recvdMessage.removeFirst();
-			return new Msg(fromId, myId, tag, recvdMessage);
+			byte[] recvdMessage = connector.receiveMessage();
+			return new Msg(fromId, myId, recvdMessage);
 		} catch (Exception e) { System.out.println(e);
 			close(); return null;		
 		}

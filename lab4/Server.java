@@ -115,7 +115,7 @@ public Server(String ip_string, int port_number, Linker initComm){
 			ServerIPs.add(ips[0]);
 	    	ServerPorts.add(Integer.parseInt(ips[1]));
 	    	try {
-	    		l = new Linker(ips[0], tempId,tempN);
+	    		l = new Linker(ips[0], tempId,tempN,Integer.parseInt(ips[1]));
 	    	  } catch (Exception e) {
 	    		// TODO Auto-generated catch block
 	    		e.printStackTrace();
@@ -138,7 +138,7 @@ public Server(String ip_string, int port_number, Linker initComm){
     	System.out.println("Awaiting new connection request");
     	Socket cSocket = ss.accept();
     	System.out.println("New Connection at port:" + cSocket.getPort());
-    	new TCPServerThread(cSocket, it).start();
+    	new TCPServerThread(cSocket, it,server_list).start();
     }
   }
   public void requestInventoryAccess(int timestamp){
