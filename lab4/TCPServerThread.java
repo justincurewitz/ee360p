@@ -39,7 +39,7 @@ public class TCPServerThread extends Thread {
 		return null;	
 	}
 	
-	public void requestInventoryAccess(Timestamp timestamp) throws InterruptedException{
+	public synchronized void requestInventoryAccess(Timestamp timestamp) throws InterruptedException{
 		  c.tick();
 		  requestQueue.add(new Timestamp(c.getValue(), myId)); // adding to my own queue
 		  try {
@@ -64,7 +64,7 @@ public class TCPServerThread extends Thread {
 		
 	}
 	*/
-    public void finishedUsingInventory() throws IOException{
+    public synchronized void finishedUsingInventory() throws IOException{
 		  requestQueue.remove();
 		  try {
 			linker.sendMsg(all_servers, "release", Integer.toString(c.getValue()));
