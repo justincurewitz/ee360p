@@ -9,9 +9,8 @@ public class Linker implements MsgHandler {
 	MsgHandler app = null;// upper layer
 	MsgHandler comm = null;// lower layer
 	public boolean appFinished = false;
-	public List<String> neighbors = new ArrayList<String>();	
+	public List<Integer> neighbors = new ArrayList<Integer>();	
 	public Properties prop = new Properties();
-	MulticastSocket multisocket;
 	String ipstr;
 	int port;
 	public Linker (String args[]) throws Exception { 
@@ -24,34 +23,20 @@ public class Linker implements MsgHandler {
 		this.port = port;
 		// reads the neighbors from a file called topologyi
 		Topology.readNeighbors(myId, neighbors);
-		for(String s: neighbors){
-			String ip_addr = s.split(":")[0];
-			String port_str = s.split(":")[1];
-			InetAddress group = InetAddress.getByName(ip_addr);
-			multisocket = new MulticastSocket(Integer.parseInt(port_str));
-			connector = new Connector(multisocket);
-			connector.connect(group);
+		for(int s: neighbors){
+			System.out.println(s);
 		}
 		
 	}
 	public void init(MsgHandler app){
 		this.app = app;	
-		for (String pid : neighbors)
-			(new ListenerThread(Integer.parseInt(pid), this)).start();		    	
+		for (int pid : neighbors)
+			(new ListenerThread(pid, this)).start();		    	
 	}
 	public Msg receiveMsg() {
-		try {
-			byte[] recvdMessage = connector.receiveMessage();
-			return new Msg(myId, recvdMessage);
-		} catch (Exception e) { System.out.println(e);
-			close(); return null;		
-		}
-
+		return null;
 	}
 	public void broadcastMsg(String s) throws UnknownHostException{
-		InetAddress group = InetAddress.getByName(ipstr);
-		connector.broadcastMessage(s, group, port);
-		
 	}
 	/*
 	 * Everything after this is only done to satisfy MsgHandler
@@ -70,13 +55,7 @@ public class Linker implements MsgHandler {
 	
 	
 	public Msg receiveMsg(int fromId) {
-		try {
-			byte[] recvdMessage = connector.receiveMessage();
-			return new Msg(fromId, myId, recvdMessage);
-		} catch (Exception e) { System.out.println(e);
-			close(); return null;		
-		}
-
+		return null;
 	}
 	public synchronized void handleMsg(Msg m, int src, String tag) { }
 	public synchronized void executeMsg(Msg m) {	
@@ -86,7 +65,7 @@ public class Linker implements MsgHandler {
 	}
 	public synchronized int getMyId() { return myId; }
 	public Properties getProp() { return prop;}
-	public List<String> getNeighbors() { return neighbors; }
+	public List<Integer> getNeighbors() { return neighbors; }
 	public void close() { appFinished = true; connector.closeSockets(); }
 	public void turnPassive() {	}
 	@Override

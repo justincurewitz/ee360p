@@ -18,7 +18,7 @@ public class TCPServerThread extends Thread {
 	int myId;
 	ArrayList<Server> neighbors;
 	public TCPServerThread(Socket s, Inventory iv, ArrayList<Server> server_list) {
-		this.s = s;
+		this.s = s; // this is the passed in clientSocket from Server.java
 		this.iv = iv;
 		neighbors = server_list;
 		try {
@@ -107,7 +107,6 @@ public class TCPServerThread extends Thread {
 		System.out.println("Started Client Function");
 		while(true){
 			try {
-				
 			    String client_str;
 			    if ((client_str = in.readLine()) != null) {
 					String[] commands = {"purchase", "cancel", "search", "list"};

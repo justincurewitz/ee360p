@@ -1,50 +1,60 @@
-import java.util.*;
-import java.net.*;
-import java.io.*;
+
+import java.util.*;import java.net.*;import java.io.*;
 
 public class Connector {
-	
-	public byte[] dataIn;
+	ServerSocket listener; 
+	Socket[] link;
+	public ObjectInputStream[] dataIn;
 	public ObjectOutputStream[] dataOut;
-	MulticastSocket ms;
 	
-	public Connector(MulticastSocket multisoc){
-		ms = multisoc;
-	}
-	public void connect(InetAddress group) throws Exception {
-		ms.joinGroup(group);
-	}
-	public void broadcastMessage(String msg,InetAddress group, int port){
-		DatagramPacket packet = new DatagramPacket(msg.getBytes(),msg.length(),group,port);
-		try {
-			ms.send(packet);
-		} catch (IOException e) {
-			e.printStackTrace();
+	public void Connect(String basename, int myId, List<Integer> neighbors)
+			throws Exception {
+		
+		int numNeigh = neighbors.size();
+		link = new Socket[numNeigh];
+		dataIn = new ObjectInputStream[numNeigh];
+		dataOut = new ObjectOutputStream[numNeigh];
+		int localport = getLocalPort(myId);
+		listener = new ServerSocket(localport);
+		
+		/* register my name in the name server */
+		
+		
+		/* accept connections from all the smaller processes */
+		for(int neighbor: neighbors){
+			Socket s = listener.accept();
+			InputStream is = s.getInputStream();
+			ObjectInputStream din = new ObjectInputStream(is);
+			Integer hisId = (Integer) din.readObject();
+			int i = neighbors.indexOf(hisId);
+			String tag = (String) din.readObject();
+			if (tag.equals("hello")) {
+				link[i] = s;
+				dataIn[i] = din;
+				dataOut[i] = new ObjectOutputStream(s.getOutputStream()); 
+		    }
+			
 		}
 		
-	}
-	public byte[] receiveMessage(){
-		dataIn = new byte[10000];
-		DatagramPacket recv = new DatagramPacket(dataIn, dataIn.length);
-		try {
-			ms.receive(recv);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return dataIn;
-	}
-	public void leaveGroup(InetAddress group){
-		try {
-			ms.leaveGroup(group);
-		} catch (IOException e) {
-			e.printStackTrace();
+		
+		/* contact all the bigger processes */
+		for (int neighbor : neighbors) {
+				InetSocketAddress addr = null;
+				int i = neighbors.indexOf(neighbor);
+				link[i] = new Socket(addr.getHostName(), addr.getPort());
+				dataOut[i] = new ObjectOutputStream(link[i].getOutputStream());
+				/* send a hello message to P_i */
+				dataOut[i].writeObject(new Integer(myId));
+				dataOut[i].writeObject(new String("hello"));
+				dataOut[i].flush();
+				dataIn[i]=new ObjectInputStream(link[i].getInputStream());
 		}
 	}
-	
+	int getLocalPort(int id) {return Symbols.ServerPort + 20 + id;	}
 	public void closeSockets() {
 		try {
-			ms.close();
+			listener.close();
+			for (Socket s : link) s.close();
 		} catch (Exception e) { System.err.println(e); }
 	}
 }

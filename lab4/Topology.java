@@ -2,12 +2,12 @@ import java.io.*;
 import java.util.*;
 public class Topology {
 	// returns true if read neighbors successfully
-	public static boolean readNeighbors(int myId,List<String> neighbors) {
+	public static boolean readNeighbors(int myId,List<Integer> neighbors) {
 		System.out.println("Reading topology" + myId);
 		try {
 			Scanner sc = new Scanner(new FileReader("topology" + myId + ".txt"));
 			while (sc.hasNext()) {
-				String neighbor = sc.nextLine();
+				int neighbor = sc.nextInt();
 				neighbors.add(neighbor);
 			}
 		} catch (IOException e) {
