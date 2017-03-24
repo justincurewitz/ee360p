@@ -36,6 +36,7 @@ public class Server {
 //  int port_number;
 //  Inventory iv;
 //  //public  ArrayList<Server> server_list = new ArrayList<Server>();
+  static int registryPort = 2000;
   public int myID;
   public  ArrayList<RemoteInventory> inventories;// = new ArrayList<RemoteInventory>();
    // each Server object has a reference to the server it creates
@@ -189,11 +190,7 @@ public class Server {
 		  ri = new RI(it, myID);
 		  String ri_name = "Remote"+myID;
 		  Registry rg = null;
-		  if (myID == 0){
-			  rg = LocateRegistry.createRegistry(1099);
-		  } else {
-			  rg = LocateRegistry.getRegistry();
-		  }
+		  rg = LocateRegistry.createRegistry(registryPort + 2*myID);
 		  rg.bind(ri_name, ri);
 		  System.out.println(ri_name);
 	  }catch (Exception e) {
@@ -204,10 +201,10 @@ public class Server {
 	  inventories = new ArrayList<RemoteInventory>();
 	  inventories.add(ri);
 	  getAllInventories(numServer);
-	  ServerSocket ss = null;
+	  ss = null;
 	  try {
 		  ss = new ServerSocket(ServerPorts.get(myID));
-	  } catch(IOException e) {}
+	  } catch(IOException e) {System.out.println("failed to create server socket");}
   }
   
   
@@ -224,7 +221,7 @@ public class Server {
     	System.out.println("Awaiting new connection request");
     	Socket cSocket = ss.accept();
     	System.out.println("New Connection at port:" + cSocket.getPort());
-    	//new TCPServerThread(cSocket, it,server_list, inventories).start();
+    	new TCPServerThread(cSocket, s.inventories).start();
     }
   }
   
@@ -233,7 +230,7 @@ public class Server {
   public boolean getRemoteInventory(int id){
 	  String ri_name = "Remote"+id;
 	  try {
-		  Registry rg = LocateRegistry.getRegistry();
+		  Registry rg = LocateRegistry.getRegistry(registryPort + 2*id);
 	  	  RemoteInventory ri = (RemoteInventory)rg.lookup(ri_name);
 	  	  if (ri.isValid()){
 	  		  inventories.add(ri);
@@ -253,9 +250,10 @@ public class Server {
 		  }
 	  }
 	  while(!(servers.isEmpty())) {
-		  for (String i:servers) {
-			  if (getRemoteInventory(Integer.parseInt(i))){
-				  servers.remove(i);
+		  for (int i = 0; i < servers.size(); i++) {
+			  if (getRemoteInventory(Integer.parseInt(servers.get(i)))){
+				  servers.remove(servers.get(i));
+				  i--;
 			  }
 		  }
 	  }
