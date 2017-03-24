@@ -164,33 +164,8 @@ public Server(String ip_string, int port_number, Linker initComm){
     	new TCPServerThread(cSocket, it,server_list).start();
     }
   }
-  public void requestInventoryAccess(int timestamp){
-	  c.tick();
-	  requestQueue.add(new Timestamp(c.getValue(), myId));
-	  sendMsg(neighbors, "request", c.getValue());
-	  numAcks = 0;
-	  while ((requestQueue.peek().pid != myId) || (numAcks < n-1))
-			myWait();
-  }
-  public void finishedUsingInventory(){
-	  requestQueue.remove();
-	  sendMsg(neighbors, "release", c.getValue());
-  }
-  public synchronized void handleMsg(Msg m, int src, String tag) {
-		int timeStamp = m.getMessageInt();
-		c.receiveAction(src, timeStamp);
-		if (tag.equals("request")) {
-			requestQueue.add(new Timestamp(timeStamp, src));
-			sendMsg("ack",src,c.getValue());
-		} else if (tag.equals("release")) {
-			Iterator<Timestamp> it =  requestQueue.iterator();			    
-			while (it.hasNext()){
-				if (it.next().getPid() == src) it.remove();
-			}
-		} else if (tag.equals("ack"))
-			numAcks++;
-		notifyAll();
-  }
+  
+  
   
   public boolean getRemoteInventory(int id){
 	  String ri_name = "Remote"+id;
