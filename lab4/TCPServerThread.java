@@ -1,6 +1,9 @@
 //package lab4;
 
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Queue;
 import java.io.*;
 
 public class TCPServerThread extends Thread {
@@ -9,15 +12,56 @@ public class TCPServerThread extends Thread {
 	DataOutputStream out;
 	Inventory iv;
 	
-	public TCPServerThread(Socket s, Inventory iv) {
+	int numAcks;
+	Queue<Timestamp> requestQueue;
+	LamportClock c;
+	int myId;
+	ArrayList<Server> neighbors;
+	public TCPServerThread(Socket s, Inventory iv, ArrayList<Server> server_list) {
 		this.s = s;
 		this.iv = iv;
+		neighbors = server_list;
 		try {
 			in = new BufferedReader(new InputStreamReader(this.s.getInputStream()));
 			out = new DataOutputStream(this.s.getOutputStream());
 		}catch(IOException e){e.printStackTrace();}
 	}
+	  public void requestInventoryAccess(Timestamp timestamp) throws InterruptedException{
+		  c.tick();
+		  requestQueue.add(new Timestamp(c.getValue(), myId));
+		  sendMsg(neighbors, "request", c.getValue());
+		  numAcks = 0;
+		  while ((requestQueue.peek().pid != myId) || (numAcks < neighbors.size()-1))
+				wait();
+	  }
+	  private void sendMsg(ArrayList<Server> neighbors, String string, int value) {
+		// TODO Auto-generated method stub
+		
+	}
+	public void finishedUsingInventory(){
+		  requestQueue.remove();
+		  sendMsg(neighbors, "release", c.getValue());
+	  }
+	  public synchronized void handleMsg(Msg m, int src, String tag) {
+			int timeStamp = m.getMessageInt();
+			c.receiveAction(src, timeStamp);
+			if (tag.equals("request")) {
+				requestQueue.add(new Timestamp(timeStamp, src));
+				sendMsg("ack",src,c.getValue());
+			} else if (tag.equals("release")) {
+				Iterator<Timestamp> it =  requestQueue.iterator();			    
+				while (it.hasNext()){
+					if (it.next().getPid() == src) it.remove();
+				}
+			} else if (tag.equals("ack"))
+				numAcks++;
+			notifyAll();
+		}
 	
+	private void sendMsg(String string, int dest, int value) {
+		// TODO Auto-generated method stub
+		
+	}
 	public void run() {
 		System.out.println("TCP Thread Started");
 		String c_str = "Client";
@@ -48,7 +92,6 @@ public class TCPServerThread extends Thread {
 			try {
 				
 			    String client_str;
-				
 			    if ((client_str = in.readLine()) != null) {
 					String[] commands = {"purchase", "cancel", "search", "list"};
 			    	String request[] = client_str.split(" ");
@@ -56,18 +99,8 @@ public class TCPServerThread extends Thread {
 						request[i] = request[i].replaceAll("\\P{Print}", "");
 					}
 			        String reply = null;
-			        if(request[0].equals("setmode")){
-			        	if(request[0].equals("T")){
-			        		//call tcp thread
-			        	} else {
-//			        		UDP_Thread ut = new UDP_Thread(ds, iv);
-//			        		ut.start();
-//			        		out.writeInt(udpPort);
-			        		break;
-			        	}
-			        }
-			        else if (request[0].equals(commands[0])) {
-			        	System.out.println("Success 0");
+			        requestInventoryAccess(new Timestamp(c.getValue(),myId));
+			        if (request[0].equals(commands[0])) {
 						reply = new String(iv.purchase(request));
 					} else if (request[0].equals(commands[1])){
 						reply = new String(iv.cancel(Integer.parseInt(request[1])));
@@ -76,13 +109,14 @@ public class TCPServerThread extends Thread {
 					} else if (request[0].equals(commands[3])){
 						reply = new String(iv.list());
 					}
+			        if(reply != null){
+						finishedUsingInventory();
+					}
 			        out.writeUTF(reply + "\n");
 			    }
-			}catch (IOException e){e.printStackTrace();}
+			}catch (IOException | InterruptedException e){e.printStackTrace();}
 		}
-		try {
-			s.close();
-		}catch (IOException e){e.printStackTrace();}
+		
 	}
 	
 	private void Server() {
