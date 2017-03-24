@@ -36,13 +36,13 @@ public class Server {
 //  int port_number;
 //  Inventory iv;
 //  //public  ArrayList<Server> server_list = new ArrayList<Server>();
-  static int myID;
-  static  ArrayList<RemoteInventory> inventories;// = new ArrayList<RemoteInventory>();
+  public int myID;
+  public  ArrayList<RemoteInventory> inventories;// = new ArrayList<RemoteInventory>();
    // each Server object has a reference to the server it creates
-  static ArrayList<Integer> ServerPorts;// = new ArrayList<Integer>();
-  static ArrayList<String> ServerIPs;// = new ArrayList<String>();
-  static Inventory it;
-  static ServerSocket ss;
+  public ArrayList<Integer> ServerPorts;// = new ArrayList<Integer>();
+  public ArrayList<String> ServerIPs;// = new ArrayList<String>();
+  public Inventory it;
+  public ServerSocket ss;
   
 //  
 //  /**
@@ -153,7 +153,7 @@ public class Server {
 //  }
 //  
 	
-  public static ServerSocket init() {
+  public Server() {
 	  Scanner sc = new Scanner(System.in);
 	  System.out.println("Enter server-id, number of servers, and path to inventory: ");
 	  myID = sc.nextInt();
@@ -184,8 +184,9 @@ public class Server {
 	  }
 	  //create inventory and Remote Inventory
 	  it = new Inventory(inventoryPath);
+	  RI ri = null;
 	  try {
-		  RI ri = new RI(it, myID);
+		  ri = new RI(it, myID);
 		  String ri_name = "Remote"+myID;
 		  Registry rg = null;
 		  if (myID == 0){
@@ -201,12 +202,12 @@ public class Server {
 	  }
 	  
 	  inventories = new ArrayList<RemoteInventory>();
+	  inventories.add(ri);
 	  getAllInventories(numServer);
 	  ServerSocket ss = null;
 	  try {
 		  ss = new ServerSocket(ServerPorts.get(myID));
 	  } catch(IOException e) {}
-	  return ss;
   }
   
   
@@ -216,7 +217,8 @@ public class Server {
   }
   
   public static void main (String[] args) throws Exception{
-	ServerSocket ss = init();
+	  Server s = new Server();
+	  ServerSocket ss = s.ss;
     /*Attempting to receive new connection*/
     while(true){
     	System.out.println("Awaiting new connection request");
@@ -228,7 +230,7 @@ public class Server {
   
   
   
-  public static boolean getRemoteInventory(int id){
+  public boolean getRemoteInventory(int id){
 	  String ri_name = "Remote"+id;
 	  try {
 		  Registry rg = LocateRegistry.getRegistry();
@@ -243,16 +245,16 @@ public class Server {
 
   }
   
-  public static void getAllInventories(int numServer) {
-	  ArrayList<Integer> servers = new ArrayList<Integer>();
-	  for (int i = 0; i < numServer; i++){
+  public synchronized void getAllInventories(int numServer) {
+	  ArrayList<String> servers = new ArrayList<String>();
+	  for (Integer i = 0; i < numServer; i++){
 		  if (i != myID){
-			  servers.add(i);
+			  servers.add(Integer.toString(i));
 		  }
 	  }
 	  while(!(servers.isEmpty())) {
-		  for (Integer i:servers) {
-			  if (getRemoteInventory(i)){
+		  for (String i:servers) {
+			  if (getRemoteInventory(Integer.parseInt(i))){
 				  servers.remove(i);
 			  }
 		  }
