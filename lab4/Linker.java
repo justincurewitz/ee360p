@@ -26,6 +26,8 @@ public class Linker implements MsgHandler {
 		for(int s: neighbors){
 			System.out.println(s);
 		}
+		connector = new Connector();
+		connector.Connect(ipstr, myId, neighbors);
 		
 	}
 	public void init(MsgHandler app){

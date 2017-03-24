@@ -6,20 +6,17 @@ public class Connector {
 	Socket[] link;
 	public ObjectInputStream[] dataIn;
 	public ObjectOutputStream[] dataOut;
-	
+	Name myNameclient;
 	public void Connect(String basename, int myId, List<Integer> neighbors)
 			throws Exception {
-		
 		int numNeigh = neighbors.size();
 		link = new Socket[numNeigh];
 		dataIn = new ObjectInputStream[numNeigh];
 		dataOut = new ObjectOutputStream[numNeigh];
 		int localport = getLocalPort(myId);
 		listener = new ServerSocket(localport);
-		
 		/* register my name in the name server */
-		
-		
+		myNameclient.insertName(basename + myId, (InetAddress.getLocalHost()) .getHostName(), localport);
 		/* accept connections from all the smaller processes */
 		for(int neighbor: neighbors){
 			Socket s = listener.accept();
@@ -36,8 +33,6 @@ public class Connector {
 			
 		}
 		
-		
-		/* contact all the bigger processes */
 		for (int neighbor : neighbors) {
 				InetSocketAddress addr = null;
 				int i = neighbors.indexOf(neighbor);
