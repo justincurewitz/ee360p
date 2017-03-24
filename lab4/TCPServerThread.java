@@ -11,16 +11,16 @@ public class TCPServerThread extends Thread {
 	Socket s;
 	DataOutputStream out;
 	Inventory iv;
-	
 	int numAcks;
 	Queue<Timestamp> requestQueue;
 	LamportClock c;
 	int myId;
 	ArrayList<Server> neighbors;
-	public TCPServerThread(Socket s, Inventory iv, ArrayList<Server> server_list) {
+	public TCPServerThread(Socket s,int id, Inventory iv, ArrayList<Server> server_list) {
 		this.s = s; // this is the passed in clientSocket from Server.java
 		this.iv = iv;
 		neighbors = server_list;
+		myId = id;
 		try {
 			in = new BufferedReader(new InputStreamReader(this.s.getInputStream()));
 			out = new DataOutputStream(this.s.getOutputStream());

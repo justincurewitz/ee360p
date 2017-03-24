@@ -36,6 +36,7 @@ public class Server  {
   static ArrayList<String> ServerIPs = new ArrayList<String>();
   static Inventory it;
   static ServerSocket ss;
+  int myId;
   
   
   /**
@@ -75,9 +76,10 @@ public Server(String ip_string, int port_number){
    * This function gets called whenever a new Server is created
    * 
    * */
-  public static void init() throws IOException{
+  public static int init() throws IOException{
 	  Scanner sc = new Scanner(System.in);
 	  System.out.println("Enter server-id: ");
+	  System.out.println("server id n should indicate the nth server");
 	  int tempId = sc.nextInt();
 	  tempId = 1;
 	  System.out.println("Enter number of servers n:");
@@ -115,10 +117,14 @@ public Server(String ip_string, int port_number){
 			ServerIPs.add(ips[0]);
 	    	ServerPorts.add(Integer.parseInt(ips[1]));
 	    	Server s = new Server(ips[0],Integer.parseInt(ips[1]));
-	    	server_list.add(s);
+	    	if(i == tempId){
+	    		s.myId = tempId; // now every server should be assigned an ID
+	    	}
+	    	server_list.add(s); 
 	    }
 	  it = new Inventory(inventoryPath);
       ss = new ServerSocket(ServerPorts.get(0)); // only get the first element right now
+      return tempId;
   }
   
   public String toString(){
@@ -126,13 +132,13 @@ public Server(String ip_string, int port_number){
   }
   
   public static void main (String[] args) throws Exception{
-	init();
+	int generatedServerID = init();
     /*Attempting to receive new connection*/
     while(true){
     	System.out.println("Awaiting new connection request");
     	Socket cSocket = ss.accept();
     	System.out.println("New Connection at port:" + cSocket.getPort());
-    	new TCPServerThread(cSocket, it,server_list).start();
+    	new TCPServerThread(cSocket,generatedServerID, it,server_list).start();
     }
   }
   
