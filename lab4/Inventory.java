@@ -37,7 +37,7 @@ public class Inventory {
 		} catch (IOException e){e.printStackTrace();}
 	}
 	
-	public synchronized byte[] purchase(String[] request){
+	public synchronized String purchase(String[] request){
 		byte[] buf;
 		String username = request[1];
 		String product = request[2];
@@ -48,7 +48,7 @@ public class Inventory {
 		if (num != null){
 			if (num >= quantity){
 				String summary = "Your order has been placed, " + (orderID)+" "+username+" "+product+" "+quantity;
-				buf = summary.getBytes();
+				//buf = summary.getBytes();
 				items.put(product, num - quantity);
 				Order o = new Order();
 				
@@ -71,16 +71,16 @@ public class Inventory {
 				orders.put(orderID, o);
 				client.orders.add(orderID);
 				orderID++;
-				return buf;
+				return summary;
 			} else {
 				String summary = "Not Available - Not enough items";
-				buf = summary.getBytes();
-				return buf;
+				//buf = summary.getBytes();
+				return summary;
 			}
 		}
 		String summary = "Not Available - We do not sell this product";
-		buf = summary.getBytes();
-		return buf;		
+		//buf = summary.getBytes();
+		return summary;		
 	}
 	
 	public synchronized byte[] cancel(int order) {

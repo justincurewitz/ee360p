@@ -89,7 +89,7 @@ public class TCPServerThread extends Thread {
 	}
 	
 	private void Client() {
-		System.out.println("Started Client Function");
+		//System.out.println("Started Client Function");
 		while(true){
 			try {
 				
@@ -106,21 +106,26 @@ public class TCPServerThread extends Thread {
 				        if (request[0].equals(commands[0])) {
 				        	String req = "";
 				        	for (String s:request){
-				        		req += s;
+				        		req += s+" ";
 				        	}
 							reply = allPurchase(req);
 						} else if (request[0].equals(commands[1])){
-							reply = allCancel(Integer.parseInt(request[1]));
+							reply = allCancel(request[1]);
 						} else if (request[0].equals(commands[2])){
 							reply = allSearch(request[1]);
 						} else if (request[0].equals(commands[3])){
-							//reply = new String(iv.list());
+							reply = new String(allList());
 						}
-			        } catch(Exception e) {System.out.println("oops, TCPServerThread line 118");}
+			        } catch(Exception e) {System.out.println("oops, TCPServerThread line 118");
+			        	e.printStackTrace();
+			        }
 			        if(reply != null){
-						finishedUsingInventory();
+						//finishedUsingInventory();
 					}
-			        out.writeUTF(reply + "\n");
+			        System.out.println(reply);
+			        if (reply != null) {
+			        	out.writeUTF(reply + "\n");
+			        }
 			    }
 			}catch (IOException e){e.printStackTrace();}
 		}
@@ -136,18 +141,18 @@ public class TCPServerThread extends Thread {
 		String reply = null;
 		for (RemoteInventory ri : inventories){
 			try {
-				if(reply != null) {reply = ri.purchase(req);}
+				if(reply == null) {reply = ri.purchase(req);}
 				else {ri.purchase(req);}
 			}catch(Exception e){}
 		}
 		return reply;
 	}
 	
-	public String allCancel(int req) {
+	public String allCancel(String req) {
 		String reply = null;
 		try{
 			for (RemoteInventory ri : inventories){
-				if(reply != null) {reply = ri.cancel(req);}
+				if(reply == null) {reply = ri.cancel(req);}
 				else {ri.cancel(req);}
 			}
 		}catch(Exception e){}
@@ -158,10 +163,22 @@ public class TCPServerThread extends Thread {
 		String reply = null;
 		try{
 			for (RemoteInventory ri : inventories){
-				if(reply != null) {reply = ri.search(req);}
+				if(reply == null) {reply = ri.search(req);}
 				else {ri.search(req);}
 			}
 		}catch(Exception e) {}
+		return reply;
+	}
+	
+	public String allList() {
+		String reply = null;
+		try{
+			for (RemoteInventory ri : inventories) {
+				if (reply == null) {reply = ri.list();}
+				else{ri.list();}
+			}
+		} catch(Exception e){}
+		
 		return reply;
 	}
 	
