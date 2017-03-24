@@ -9,6 +9,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.*;
+import java.rmi.Naming;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -31,7 +35,9 @@ public class Server extends MyProcess {
   InetAddress ip_address;
   String ip_string;
   int port_number;
+  Inventory iv;
   static ArrayList<Server> server_list = new ArrayList<Server>();
+  private ArrayList<RemoteInventory> inventories = new ArrayList<RemoteInventory>();
    // each Server object has a reference to the server it creates
   static ArrayList<Integer> ServerPorts = new ArrayList<Integer>();
   static ArrayList<String> ServerIPs = new ArrayList<String>();
@@ -83,6 +89,19 @@ public Server(String ip_string, int port_number, Linker initComm){
 	} catch (UnknownHostException e) {
 		e.printStackTrace();
 	}
+	//System.setProperties(java.rmi.server.hostname, "127.0.0.1");
+	//This block instantiates the remote object
+	iv = new Inventory("inventory.txt");
+	try {
+		RI ri = new RI(iv, myId);
+		String ri_name = "Remote"+this.myId;
+		Registry rg = LocateRegistry.createRegistry(1099);
+		rg.bind(ri_name, ri);
+		System.out.println(ri_name);
+	}catch (Exception e) {
+		System.out.println("Failed to create remote inventory");
+		e.printStackTrace();
+	}
 	  
   }
   /*
@@ -93,16 +112,20 @@ public Server(String ip_string, int port_number, Linker initComm){
 	  Scanner sc = new Scanner(System.in);
 	  System.out.println("Enter server-id: ");
 	  int tempId = sc.nextInt();
+	  tempId = 1;
 	  System.out.println("Enter number of servers n:");
 	  int tempN = sc.nextInt();
+	  tempN = 1;
 	  System.out.println("Please enter the filepath as: topologyi.txt where i is your server-id");
 	  String inventoryPath = sc.next();
+	  inventoryPath = "topology1.txt";
 	  String topologyi = inventoryPath;
 	  Linker l = null;
 	  System.out.println("Enter " + tempN + " IPs");
 	  System.out.println("example format: 127.0.0.1:8000");
 	    for(int i = 1; i <= tempN; i++){
 	    	String ip = sc.next();
+	    	ip = "127.0.0.1:8000";
 	    	try{
 	      	    PrintWriter writer = new PrintWriter(topologyi, "UTF-8");
 	      	    writer.println(ip);
@@ -167,7 +190,21 @@ public Server(String ip_string, int port_number, Linker initComm){
 		} else if (tag.equals("ack"))
 			numAcks++;
 		notifyAll();
-	}
+  }
+  
+  public boolean getRemoteInventory(int id){
+	  String ri_name = "Remote"+id;
+	  try {
+		  Registry rg = LocateRegistry.getRegistry();
+	  	  RemoteInventory ri = (RemoteInventory)rg.lookup(ri_name);
+	  	  if (ri.isValid()){
+	  		  System.out.println(ri.testFunc());
+	  		  return true;
+	  	  }
+	  } catch (Exception e){}
+  	  return false;
+
+  }
 
   
  
