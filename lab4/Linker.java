@@ -29,6 +29,7 @@ public class Linker implements MsgHandler {
 		}
 		connector = new Connector();
 		connector.Connect(ipstr, myId, neighbors);
+		
 	}
 	public void init(MsgHandler app){
 		this.app = app;	
@@ -41,9 +42,10 @@ public class Linker implements MsgHandler {
 	/*
 	 * Everything after this is only done to satisfy MsgHandler
 	 * */
-	public void sendMsg(int destId, Object ... objects) throws ClassNotFoundException, UnknownHostException, IOException {	
-			connector.broadcastMessagesToNeighbors(new Socket(ipstr,port), neighbors, myId, destId, objects);
-	}
+	
+	public void sendMsg(ArrayList<Server> s, Object ... objects) throws ClassNotFoundException, UnknownHostException, IOException {	
+		connector.broadcastMessagesToNeighbors(new Socket(ipstr,port), neighbors, myId,  objects);
+    }
 	
 	public Msg receiveMsg(int fromId) {
 		int i = neighbors.indexOf(fromId);

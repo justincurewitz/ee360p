@@ -16,31 +16,44 @@ public class TCPServerThread extends Thread {
 	Queue<Timestamp> requestQueue;
 	LamportClock c;
 	int myId;
-	ArrayList<Server> neighbors;
+	ArrayList<Server> all_servers;
+	Linker linker;
 	public TCPServerThread(Socket s,int id, Inventory iv, ArrayList<Server> server_list) {
 		this.s = s; // this is the passed in clientSocket from Server.java
 		this.iv = iv;
-		neighbors = server_list;
-		myId = id;
+		all_servers = server_list;
+		linker = getServerByID(id,all_servers).linker; // essentially passing down the top level linker here.
 		try {
 			in = new BufferedReader(new InputStreamReader(this.s.getInputStream()));
 			out = new DataOutputStream(this.s.getOutputStream());
-		}catch(IOException e){e.printStackTrace();}
+		}catch(IOException e){e.printStackTrace();
+		}
 	}
-	  public void requestInventoryAccess(Timestamp timestamp) throws InterruptedException{
+	
+	public static Server getServerByID(int ID,ArrayList<Server> listOfServers){
+		for(Server ser : listOfServers){
+			if(ser.myId == ID){
+				return ser;
+			}
+		}
+		return null;	
+	}
+	
+	public void requestInventoryAccess(Timestamp timestamp) throws InterruptedException{
 		  c.tick();
-		  requestQueue.add(new Timestamp(c.getValue(), myId));
+		  requestQueue.add(new Timestamp(c.getValue(), myId)); // adding to my own queue
 		  try {
-			sendMsg(neighbors, "request", c.getValue());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			linker.sendMsg(all_servers, "request",Integer.toString(c.getValue()));
+			//sendMsg(all_servers, "request", c.getValue());
+		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 		  numAcks = 0;
-		  while ((requestQueue.peek().pid != myId) || (numAcks < neighbors.size()-1))
+		  while ((requestQueue.peek().pid != myId) || (numAcks < all_servers.size()-1))
 				wait();
 	  }
-	  private void sendMsg(ArrayList<Server> neighbors, String string, int value) throws IOException {
+	/*
+	private void sendMsg(ArrayList<Server> neighbors, String string, int value) throws IOException {
 		// TODO Auto-generated method stub
 		  for(Server s: neighbors){
 			  Socket soc = new Socket(s.ip_address,s.port_number);
@@ -50,12 +63,22 @@ public class TCPServerThread extends Thread {
 		  }
 		
 	}
-	public void finishedUsingInventory() throws IOException{
+	*/
+    public void finishedUsingInventory() throws IOException{
 		  requestQueue.remove();
-		  sendMsg(neighbors, "release", c.getValue());
+		  try {
+			linker.sendMsg(all_servers, "release", Integer.toString(c.getValue()));
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
 	  }
-	  public synchronized void handleMsg(Msg m, int src, String tag) throws IOException {
-			int timeStamp = m.getMessageInt();
+    public synchronized void handleMsg(Msg m, int src, String tag) throws IOException {
+			//int timeStamp = m.getMessageInt();
+    	    // need to do some testing becuase right now im just transforming the byte array into String and then parsing as int which should break
+			Msg message = linker.receiveMsg(src);
+			byte[] buffer = message.bytemsgBuf;
+			String frombytes = new String(buffer);
+			int timeStamp = Integer.parseInt(frombytes);
 			c.receiveAction(src, timeStamp);
 			if (tag.equals("request")) {
 				requestQueue.add(new Timestamp(timeStamp, src));
@@ -68,7 +91,7 @@ public class TCPServerThread extends Thread {
 			} else if (tag.equals("ack"))
 				numAcks++;
 			notifyAll();
-		}
+    }
 	/*
 	 * This is broken needs dest to be resolved to the right thing
 	 * 

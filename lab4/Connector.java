@@ -20,19 +20,19 @@ public class Connector {
 		/* accept connections from all the smaller processes */
 	}
 	int getLocalPort(int id) {return Symbols.ServerPort + 20 + id;	}
-	public void broadcastMessagesToNeighbors(Socket s, List<Integer> neighbors,int myId,int destId, Object ... objects) throws IOException,ClassNotFoundException{
+	public void broadcastMessagesToNeighbors(Socket s, List<Integer> neighbors,int myId, Object ... objects) throws IOException,ClassNotFoundException{
 		for (int neighbor : neighbors) {
 			InetSocketAddress addr = null;
 			int i = neighbors.indexOf(neighbor);
 			link[i] = new Socket(addr.getHostName(), addr.getPort());
 			dataOut[i] = new ObjectOutputStream(link[i].getOutputStream());
 			/* send a hello message to P_i */
-			dataOut[i].writeObject(new Integer(myId));
-			dataOut[i].writeObject(new String("inventory_state"));
-			int j = neighbors.indexOf(destId);
+			//dataOut[i].writeObject(new Integer(myId));
+			//dataOut[i].writeObject(new String("inventory_state"));
+			//int j = neighbors.indexOf(destId);
 			try {
 				LinkedList<Object> objectList = Util.getLinkedList(objects);
-				ObjectOutputStream os = dataOut[j];
+				ObjectOutputStream os = dataOut[i];
 				os.writeObject(Integer.valueOf(objectList.size()));
 				for (Object object : objectList) 
 					os.writeObject(object);

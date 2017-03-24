@@ -37,7 +37,7 @@ public class Server  {
   static Inventory it;
   static ServerSocket ss;
   int myId;
-  
+  Linker linker;
   
   /**
    * This server constructor takes in 
@@ -119,6 +119,11 @@ public Server(String ip_string, int port_number){
 	    	Server s = new Server(ips[0],Integer.parseInt(ips[1]));
 	    	if(i == tempId){
 	    		s.myId = tempId; // now every server should be assigned an ID
+	    		try {
+					s.linker = new Linker(s.ip_string,s.myId,s.server_list.size(),s.port_number);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 	    	}
 	    	server_list.add(s); 
 	    }
