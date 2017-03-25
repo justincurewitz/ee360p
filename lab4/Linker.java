@@ -1,6 +1,7 @@
 import java.util.*; import java.io.*;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 public class Linker implements MsgHandler {
@@ -15,6 +16,7 @@ public class Linker implements MsgHandler {
 	public Properties prop = new Properties();
 	String ipstr;
 	int port;
+	ServerSocket sersock;
 	public Linker (String args[]) throws Exception { 
 		super();
 	}
@@ -24,13 +26,16 @@ public class Linker implements MsgHandler {
 		n = all_servers.size();
 		ipstr = ip_string;
 		this.port = port;
+		
 		// reads the neighbors from a file called topologyi
 		Topology.readNeighbors(myId, neighbors);
-		for(int s: neighbors){
-			System.out.println(s);
+		for(Server s: all_servers){
+			if(s.myId == myId){
+				sersock = s.ss;
+			}
 		}
 		connector = new Connector();
-		connector.Connect(ipstr, myId, all_servers);
+		connector.Connect(ipstr, myId, all_servers,sersock);
 		
 	}
 	public void init(MsgHandler app){

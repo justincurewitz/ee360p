@@ -8,7 +8,7 @@ public class Connector {
 	public ObjectOutputStream[] dataOut;
 	//Name myNameclient;
 	static ArrayList<Server> all_serv;
-	public void Connect(String basename, int myId, ArrayList<Server> allser)
+	public void Connect(String basename, int myId, ArrayList<Server> allser, ServerSocket ss)
 			throws Exception {
 		int numNeigh = allser.size();
 		link = new Socket[numNeigh];
@@ -16,7 +16,7 @@ public class Connector {
 		dataOut = new ObjectOutputStream[numNeigh];
 		all_serv = allser;
 		int localport = getLocalPort(myId);
-		listener = new ServerSocket(localport);
+		listener = ss;
 		/* register my name in the name server */
 		//myNameclient.insertName(basename + myId, (InetAddress.getLocalHost()) .getHostName(), localport);
 		/* accept connections from all the smaller processes */

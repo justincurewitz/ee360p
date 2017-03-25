@@ -31,7 +31,19 @@ public class TCPServerThread extends Thread {
 						return Timestamp.compare(a, b);
 					}
 				});
-		linker = getServerByID(id,all_servers).linker; // essentially passing down the top level linker here.
+		if(getServerByID(id,all_servers).linker == null){
+			Server svr = getServerByID(id,all_servers);
+			System.out.println(svr == null);
+			try {
+				this.linker = getServerByID(id,all_servers).linker = new Linker(svr.ip_string,svr.myId,svr.port_number,svr.server_list);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else{
+			   this.linker = getServerByID(id,all_servers).linker;
+		}
+		//linker = getServerByID(id,all_servers).linker; // essentially passing down the top level linker here.
 		try {
 			in = new BufferedReader(new InputStreamReader(this.s.getInputStream()));
 			out = new DataOutputStream(this.s.getOutputStream());
@@ -52,6 +64,8 @@ public class TCPServerThread extends Thread {
 		  c.tick();
 		  requestQueue.add(timestamp); // adding to my own queue
 		  try {
+			System.out.println(linker == null);
+			System.out.println(Integer.toString(c.getValue()));
 			linker.sendMsg(all_servers, "request",Integer.toString(c.getValue()));
 			//sendMsg(all_servers, "request", c.getValue());
 		} catch (IOException | ClassNotFoundException e) {
