@@ -85,13 +85,12 @@ public Server(String ip_string, int port_number){
 	  System.out.println("Enter number of servers n:");
 	  int tempN = sc.nextInt();
 	  tempN = 1;
-	  System.out.println("Please enter the filepath as: topologyi.txt where i is your server-id");
+	  System.out.println("Please enter the inventory filepath:");
 	  String inventoryPath = sc.next();
-	  inventoryPath = "topology1.txt";
-	  String topologyi = inventoryPath;
+	  Inventory iv = new Inventory(inventoryPath);
+	  String topologyi = "topology" + tempId + ".txt";
 	  System.out.println("Enter " + tempN + " IPs");
 	  System.out.println("example format: 127.0.0.1:8000");
-	  Inventory iv = new Inventory("inventory.txt");
 		try {
 			RI ri = new RI(iv, tempId);
 			String ri_name = "Remote"+ tempId;
