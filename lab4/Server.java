@@ -46,30 +46,101 @@ public class Server {
   public ServerSocket ss;
   
 	
-  public Server() {
-	  Scanner sc = new Scanner(System.in);
-	  System.out.println("Enter server-id, number of servers, and path to inventory: ");
-	  myID = sc.nextInt();
-	  int numServer = sc.nextInt();
-	  String inventoryPath = sc.next();
-	  String topologyi = inventoryPath;
-	  Linker l = null;
-	  //debug
-	  /*
-	  myID = 1;
-	  numServer = 1;
-	  inventoryPath = "inventory.txt";
-	  */
-	  //ask for ips
-	  System.out.println("Enter " + numServer + " IPs");
-	  System.out.println("example format: 127.0.0.1:8000");
+ 
+	
+
+public class Server  {
+  
+  /*
+   * Variables for Server
+   * */
+  InetAddress ip_address;
+  String ip_string;
+  int port_number;
+  static ArrayList<Server> server_list = new ArrayList<Server>();
+  private ArrayList<RemoteInventory> inventories = new ArrayList<RemoteInventory>();
+   // each Server object has a reference to the server it creates
+  static ArrayList<Integer> ServerPorts = new ArrayList<Integer>();
+  static ArrayList<String> ServerIPs = new ArrayList<String>();
+  static Inventory it;
+  static ServerSocket ss;
+  int myId;
+  Linker linker;
+  
+  /**
+   * This server constructor takes in 
+   * @param InetAddress ip_address: the ip_address 
+   * @param int port_number: the portnumber
+   * */
+@SuppressWarnings("unchecked")
+public Server(InetAddress ip_address, int port_number, Linker initComm){
+	  // Initialization for our code
+	  this.ip_address = ip_address;
+	  this.port_number = port_number;
 	  
-	  //get all ips and ports then add to lists
-	  ServerIPs = new ArrayList<String>();
-	  ServerPorts = new ArrayList<Integer>();
+  }
+  /**
+   * This server constructor takes in an
+   * @param String ip_string: the string representation of the IP from console
+   * @param int port_number: the port number from console
+   * */
+ @SuppressWarnings( "unchecked")
+public Server(String ip_string, int port_number){
+	InetAddress addr;
+	try {
+		addr = InetAddress.getByName(ip_string);
+		this.ip_address = addr;
+		this.ip_string = ip_string;
+		this.port_number = port_number;
+	} catch (UnknownHostException e) {
+		e.printStackTrace();
+	}
+	//System.setProperties(java.rmi.server.hostname, "127.0.0.1");
+	//This block instantiates the remote object
+	
+	  
+  }
+  /*
+   * This function gets called whenever a new Server is created
+   * 
+   * */
+  public static int init() throws IOException{
+	  Scanner sc = new Scanner(System.in);
+	  System.out.println("Enter server-id: ");
+	  System.out.println("server id n should indicate the nth server");
+	  int tempId = sc.nextInt();
+	  tempId = 1;
+	  System.out.println("Enter number of servers n:");
+	  int tempN = sc.nextInt();
+	  tempN = 1;
+	  System.out.println("Please enter the inventory filepath:");
+	  String inventoryPath = sc.next();
+	  Inventory iv = new Inventory(inventoryPath);
+	  String topologyi = "topology" + tempId + ".txt";
+	  System.out.println("Enter " + tempN + " IPs");
+	  System.out.println("example format: 127.0.0.1:8000");
+		try {
+			RI ri = new RI(iv, tempId);
+			String ri_name = "Remote"+ tempId;
+			Registry rg = LocateRegistry.createRegistry(1099);
+			rg.bind(ri_name, ri);
+			System.out.println(ri_name);
+		}catch (Exception e) {
+			System.out.println("Failed to create remote inventory");
+			e.printStackTrace();
+		}
+	    
+        
+         
 	  for(int i = 1; i <= numServer; i++){
 		String ip = sc.next();
-		
+      try{
+	      	    PrintWriter writer = new PrintWriter(topologyi, "UTF-8");
+	      	    writer.println(tempId);
+	      	    writer.close();
+	      	  } catch (IOException e) {
+	      	   e.printStackTrace();
+	      	  }
 		String[] ips = ip.split(":");
 		System.out.println(ips.length);
 		ServerIPs.add(ips[0]);
@@ -97,6 +168,34 @@ public class Server {
 	  try {
 		  ss = new ServerSocket(ServerPorts.get(myID));
 	  } catch(IOException e) {System.out.println("failed to create server socket");}
+        
+        
+        
+        
+	    	Server s = new Server(ips[0],Integer.parseInt(ips[1]));
+	    	if(i == tempId){
+	    		s.myId = tempId; // now every server should be assigned an ID
+	    	}
+	    	server_list.add(s); 
+	    }
+	    
+	    for(int i = 0; i < server_list.size(); i++){
+	    	if(i == tempId){
+	    		Server s = server_list.get(i);
+	    		try {
+					s.linker = new Linker(s.ip_string,s.myId,s.port_number,server_list);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+	    		
+	    	}
+	    	
+	    }
+	    it = new Inventory(inventoryPath);
+      ss = new ServerSocket(ServerPorts.get(0)); // only get the first element right now
+      return tempId;
+    
+
   }
   
   
@@ -108,12 +207,16 @@ public class Server {
   public static void main (String[] args) throws Exception{
 	  Server s = new Server();
 	  ServerSocket ss = s.ss;
+	  int generatedServerID = init();
+
     /*Attempting to receive new connection*/
     while(true){
     	System.out.println("Awaiting new connection request");
     	Socket cSocket = ss.accept();
     	System.out.println("New Connection at port:" + cSocket.getPort());
-    	new TCPServerThread(cSocket, s.inventories).start();
+
+    	new TCPServerThread(cSocket,generatedServerID, it,server_list, s.inventories).start();
+
     }
   }
   
