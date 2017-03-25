@@ -88,16 +88,16 @@ public class Client {
 		   outToServer.writeBytes(tokens[0] + " " + tokens[1] + " " + tokens[2] + " "  + tokens[3] + '\n');
 		   String modifiedSentence = inFromServer.readLine();
 		   System.out.println("FROM SERVER: " + modifiedSentence);
-		   clientSocket.close();
+		   //clientSocket.close();
 	   } else if (tokens[0].equals("cancel")) {
 		   DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
 		   BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 		   outToServer.writeUTF("Client\n");
-		   outToServer.writeBytes("cancel" + '\n');
+		   outToServer.writeBytes(cmd + '\n');
 		   String modifiedSentence = inFromServer.readLine();
 		   System.out.println("FROM SERVER: " + modifiedSentence);
-		   clientSocket.close();
-	   } else if (tokens[0].equals("search")) {
+		   //clientSocket.close();
+	   } else if (tokens[0].equals("search") || tokens[0].equals("list")) {
 		   DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
 	       BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 	   	   outToServer.writeUTF("Client\n");
@@ -112,13 +112,14 @@ public class Client {
 		    	  String modifiedSentence = inFromServer.readLine();
 				  System.out.println("FROM SERVER: " + modifiedSentence);
 	    	  }
-			  clientSocket.close();
+			  //clientSocket.close();
 
 
 	   } else {
 	   System.out.println("ERROR: No such command");
 	   }
     }
+    clientSocket.close();
     System.out.println("Client Exited");
   }
 }
