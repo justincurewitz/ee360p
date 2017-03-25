@@ -6,23 +6,40 @@ public class Connector {
 	Socket[] link;
 	public ObjectInputStream[] dataIn;
 	public ObjectOutputStream[] dataOut;
-	Name myNameclient;
-	public void Connect(String basename, int myId, List<Integer> neighbors)
+	//Name myNameclient;
+	static ArrayList<Server> all_serv;
+	public void Connect(String basename, int myId, ArrayList<Server> allser)
 			throws Exception {
-		int numNeigh = neighbors.size();
+		int numNeigh = allser.size();
 		link = new Socket[numNeigh];
 		dataIn = new ObjectInputStream[numNeigh];
 		dataOut = new ObjectOutputStream[numNeigh];
+		all_serv = allser;
 		int localport = getLocalPort(myId);
 		listener = new ServerSocket(localport);
 		/* register my name in the name server */
-		myNameclient.insertName(basename + myId, (InetAddress.getLocalHost()) .getHostName(), localport);
+		//myNameclient.insertName(basename + myId, (InetAddress.getLocalHost()) .getHostName(), localport);
 		/* accept connections from all the smaller processes */
 	}
-	int getLocalPort(int id) {return Symbols.ServerPort + 20 + id;	}
+	int getLocalPort(int id) {
+		for(Server se: all_serv){
+			if(se.myId == id){
+				return se.port_number;
+			}
+		}
+		return -1;
+	}
+	static InetSocketAddress getAddressFromID(int id){
+		for(Server se: all_serv){
+			if(se.myId == id){
+				return InetSocketAddress.createUnresolved(se.ip_string, se.port_number);
+			}
+		}
+		return null;
+	}
 	public void broadcastMessagesToNeighbors(Socket s, List<Integer> neighbors,int myId, Object ... objects) throws IOException,ClassNotFoundException{
 		for (int neighbor : neighbors) {
-			InetSocketAddress addr = null;
+			InetSocketAddress addr = getAddressFromID(neighbor);
 			int i = neighbors.indexOf(neighbor);
 			link[i] = new Socket(addr.getHostName(), addr.getPort());
 			dataOut[i] = new ObjectOutputStream(link[i].getOutputStream());

@@ -10,16 +10,18 @@ public class Linker implements MsgHandler {
 	MsgHandler app = null;// upper layer
 	MsgHandler comm = null;// lower layer
 	public boolean appFinished = false;
-	public List<Integer> neighbors = new ArrayList<Integer>();	
+	public List<Integer> neighbors = new ArrayList<Integer>();
+	public ArrayList<Server> all_servers = new ArrayList<Server>();
 	public Properties prop = new Properties();
 	String ipstr;
 	int port;
 	public Linker (String args[]) throws Exception { 
 		super();
 	}
-	public Linker(String ip_string, int id, int numProc,int port) throws Exception{
+	public Linker(String ip_string, int id,int port,ArrayList<Server> allser) throws Exception{
 		myId = id;
-		n = numProc;
+		all_servers = allser;
+		n = all_servers.size();
 		ipstr = ip_string;
 		this.port = port;
 		// reads the neighbors from a file called topologyi
@@ -28,7 +30,7 @@ public class Linker implements MsgHandler {
 			System.out.println(s);
 		}
 		connector = new Connector();
-		connector.Connect(ipstr, myId, neighbors);
+		connector.Connect(ipstr, myId, all_servers);
 		
 	}
 	public void init(MsgHandler app){

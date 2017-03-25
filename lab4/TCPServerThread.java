@@ -2,7 +2,9 @@
 
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.io.*;
 
@@ -22,6 +24,13 @@ public class TCPServerThread extends Thread {
 		this.s = s; // this is the passed in clientSocket from Server.java
 		this.iv = iv;
 		all_servers = server_list;
+		c = new LamportClock();
+		requestQueue = new PriorityQueue<Timestamp>(all_servers.size(), 	
+				new Comparator<Timestamp>() {
+					public int compare(Timestamp a, Timestamp b) {
+						return Timestamp.compare(a, b);
+					}
+				});
 		linker = getServerByID(id,all_servers).linker; // essentially passing down the top level linker here.
 		try {
 			in = new BufferedReader(new InputStreamReader(this.s.getInputStream()));
@@ -31,9 +40,9 @@ public class TCPServerThread extends Thread {
 	}
 	
 	public static Server getServerByID(int ID,ArrayList<Server> listOfServers){
-		for(Server ser : listOfServers){
-			if(ser.myId == ID){
-				return ser;
+		for(int i = 0; i < listOfServers.size(); i++){
+			if(listOfServers.get(i).myId == ID){
+				return listOfServers.get(i);
 			}
 		}
 		return null;	
@@ -41,7 +50,7 @@ public class TCPServerThread extends Thread {
 	
 	public synchronized void requestInventoryAccess(Timestamp timestamp) throws InterruptedException{
 		  c.tick();
-		  requestQueue.add(new Timestamp(c.getValue(), myId)); // adding to my own queue
+		  requestQueue.add(timestamp); // adding to my own queue
 		  try {
 			linker.sendMsg(all_servers, "request",Integer.toString(c.getValue()));
 			//sendMsg(all_servers, "request", c.getValue());

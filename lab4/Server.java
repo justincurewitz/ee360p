@@ -119,13 +119,21 @@ public Server(String ip_string, int port_number){
 	    	Server s = new Server(ips[0],Integer.parseInt(ips[1]));
 	    	if(i == tempId){
 	    		s.myId = tempId; // now every server should be assigned an ID
+	    	}
+	    	server_list.add(s); 
+	    }
+	    
+	    for(int i = 0; i < server_list.size(); i++){
+	    	if(i == tempId){
+	    		Server s = server_list.get(i);
 	    		try {
-					s.linker = new Linker(s.ip_string,s.myId,s.server_list.size(),s.port_number);
+					s.linker = new Linker(s.ip_string,s.myId,s.port_number,server_list);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+	    		
 	    	}
-	    	server_list.add(s); 
+	    	
 	    }
 	  it = new Inventory(inventoryPath);
       ss = new ServerSocket(ServerPorts.get(0)); // only get the first element right now
