@@ -99,7 +99,6 @@ int main(int argc, char** argv){
 				token = strtok(NULL, " ");
 			}
  		}
-		cout << endl;
 		fclose(mfile);
 		fclose(vfile);
 
@@ -124,8 +123,8 @@ int main(int argc, char** argv){
 		cout << endl;
 		#endif
 		disp[0] = 0;
-		for (int i = 1; i < rows; i++) {
-			disp[i] = sendCount[i-1]*cols + disp[i - 1];
+		for (int i = 1; i < w_size; i++) {
+			disp[i] = sendCount[i-1] + disp[i - 1];
 		}
 		#ifdef debug
 		cout << "w_size: " << w_size << endl;
@@ -137,7 +136,6 @@ int main(int argc, char** argv){
 		sendbuf = (int*)malloc(dataMatrix.size()*sizeof(int));
 		for (int i = 0; i < dataMatrix.size(); i++) {
 			sendbuf[i] = dataMatrix[i];
-			cout << dataMatrix[i] << " ";
 		}
 		cout << endl;
 		vect = (int*)malloc(vec.size()*sizeof(int));
@@ -146,37 +144,31 @@ int main(int argc, char** argv){
 		}
 	}
 	//give everyone row, col, vec, sendCount, disp
+	for (int i = 0; i < w_size; i++) {
+		//cout << vect[i] << endl;
+		cout  << "rank " << w_rank<< " ";
+		cout << sendCount[i] << " ";
+		cout << disp[i] << " ";
+	}
+	cout << endl;
   MPI_Bcast(&rows,1,MPI_INT,0,MPI_COMM_WORLD);
   MPI_Bcast(&cols,1,MPI_INT,0,MPI_COMM_WORLD);
-  MPI_Bcast(vect,cols,MPI_INT,0,MPI_COMM_WORLD);
+  if (w_rank != 0) {
+		vect = (int*)malloc(sizeof(int) *cols);
+	}
+	assert(vect != NULL);
+	MPI_Bcast(vect,cols,MPI_INT,0,MPI_COMM_WORLD);
   MPI_Bcast(sendCount,w_size,MPI_INT,0,MPI_COMM_WORLD);
   MPI_Bcast(disp,w_size,MPI_INT,0,MPI_COMM_WORLD);
 	//make receive buffer
 	int* recvbuf = (int*)malloc(sendCount[w_rank]*sizeof(int));
-	/*if (w_rank == 0) {
-	cout << sendCount[w_rank] << "->send" << endl;
-	for (int i = 0; i < sendCount[w_rank]; i++) {
-		cout << recvbuf[i] << " ";
-	}
-	cout << endl;
-	}*/
 	//send dataMatrix to all processes
 	MPI_Scatterv(sendbuf, sendCount, disp, MPI_INT, recvbuf, sendCount[w_rank], MPI_INT, 0, MPI_COMM_WORLD);
-	//if (w_rank != 0) {
-	cout << "Rank: " << w_rank << " ";
-	cout << "world_size: " << w_size << " ";
-	cout << "sendCount: " << sendCount[w_rank] << endl;
-	assert(recvbuf != NULL);
-	cout << "past assert" << endl;
 	int* sum = (int*)malloc(sizeof(int)*sendCount[w_rank]/cols);
-	mult(sendCount[w_rank]/cols, sum, vect, recvbuf, cols);
-	for (int i = 0; i < sendCount[w_rank]/cols; i++) {
+	for (int i = 0; i < w_size; i++) {
 		cout << sum[i] << " ";
 	}
-	cout << endl;
-	cout << "past mult" << endl;
-	cout << endl;	
+	mult(sendCount[w_rank]/cols, sum, vect, recvbuf, cols);
 	MPI_Finalize();
 	return 0;
-
 }
