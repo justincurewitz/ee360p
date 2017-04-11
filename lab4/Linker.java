@@ -1,6 +1,7 @@
 import java.util.*; import java.io.*;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 public class Linker implements MsgHandler {
@@ -10,25 +11,32 @@ public class Linker implements MsgHandler {
 	MsgHandler app = null;// upper layer
 	MsgHandler comm = null;// lower layer
 	public boolean appFinished = false;
-	public List<Integer> neighbors = new ArrayList<Integer>();	
+	public List<Integer> neighbors = new ArrayList<Integer>();
+	public ArrayList<Server> all_servers = new ArrayList<Server>();
 	public Properties prop = new Properties();
 	String ipstr;
 	int port;
+	ServerSocket sersock;
 	public Linker (String args[]) throws Exception { 
 		super();
 	}
-	public Linker(String ip_string, int id, int numProc,int port) throws Exception{
+	public Linker(String ip_string, int id,int port,ArrayList<Server> allser) throws Exception{
 		myId = id;
-		n = numProc;
+		all_servers = allser;
+		n = all_servers.size();
 		ipstr = ip_string;
 		this.port = port;
+		
 		// reads the neighbors from a file called topologyi
 		Topology.readNeighbors(myId, neighbors);
-		for(int s: neighbors){
-			System.out.println(s);
+		for(Server s: all_servers){
+			if(s.myId == myId){
+				sersock = s.ss;
+			}
 		}
 		connector = new Connector();
-		connector.Connect(ipstr, myId, neighbors);
+		connector.Connect(ipstr, myId, all_servers,sersock);
+		
 	}
 	public void init(MsgHandler app){
 		this.app = app;	
@@ -41,9 +49,10 @@ public class Linker implements MsgHandler {
 	/*
 	 * Everything after this is only done to satisfy MsgHandler
 	 * */
-	public void sendMsg(int destId, Object ... objects) throws ClassNotFoundException, UnknownHostException, IOException {	
-			connector.broadcastMessagesToNeighbors(new Socket(ipstr,port), neighbors, myId, destId, objects);
-	}
+	
+	public void sendMsg(ArrayList<Server> s, Object ... objects) throws ClassNotFoundException, UnknownHostException, IOException {	
+		connector.broadcastMessagesToNeighbors(new Socket(ipstr,port), neighbors, myId,  objects);
+    }
 	
 	public Msg receiveMsg(int fromId) {
 		int i = neighbors.indexOf(fromId);
