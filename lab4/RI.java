@@ -15,18 +15,24 @@ public class RI extends UnicastRemoteObject implements RemoteInventory{
 		return name;
 	}
 	public String purchase(String request){
-		System.out.println("Started purchase");
+		//System.out.println("Started purchase");
 		String[] req = request.split(" ");
-		System.out.println(request);
-		return new String(iv.purchase(req));
+		//System.out.println(request);
+		String reply = iv.purchase(req);
+		//System.out.println(reply);
+		return reply;
 	}
 	
 	public String search(String request) {
 		return new String(iv.search(request));
 	}
 	
-	public String cancel(int request) {
-		return new String(iv.cancel(request));
+	public String cancel(String request) {
+		return new String(iv.cancel(Integer.parseInt(request)));
+	}
+	
+	public String list() {
+		return new String(iv.list());
 	}
 	
 	public boolean isValid() {

@@ -18,11 +18,14 @@ public class TCPServerThread extends Thread {
 	Queue<Timestamp> requestQueue;
 	LamportClock c;
 	int myId;
+	ArrayList<Server> neighbors = new ArrayList<Server>();
+	ArrayList<RemoteInventory> inventories;
 	ArrayList<Server> all_servers;
 	Linker linker;
-	public TCPServerThread(Socket s,int id, Inventory iv, ArrayList<Server> server_list) {
+	public TCPServerThread(Socket s,int id, Inventory iv, ArrayList<Server> server_list,ArrayList<RemoteInventory> ivs ) {
 		this.s = s; // this is the passed in clientSocket from Server.java
 		this.iv = iv;
+    inventories = ivs;
 		all_servers = server_list;
 		c = new LamportClock();
 		requestQueue = new PriorityQueue<Timestamp>(all_servers.size(), 	
@@ -44,6 +47,7 @@ public class TCPServerThread extends Thread {
 			   this.linker = getServerByID(id,all_servers).linker;
 		}
 		//linker = getServerByID(id,all_servers).linker; // essentially passing down the top level linker here.
+
 		try {
 			in = new BufferedReader(new InputStreamReader(this.s.getInputStream()));
 			out = new DataOutputStream(this.s.getOutputStream());
@@ -89,6 +93,25 @@ public class TCPServerThread extends Thread {
 	*/
     public synchronized void finishedUsingInventory() throws IOException{
 		  requestQueue.remove();
+		  sendMsg(neighbors, "release", c.getValue());
+	}
+	public synchronized void handleMsg(Msg m, int src, String tag) {
+		int timeStamp = m.getMessageInt();
+		c.receiveAction(src, timeStamp);
+		if (tag.equals("request")) {
+			requestQueue.add(new Timestamp(timeStamp, src));
+			sendMsg("ack",src,c.getValue());
+		} else if (tag.equals("release")) {
+			Iterator<Timestamp> it =  requestQueue.iterator();			    
+			while (it.hasNext()){
+				if (it.next().getPid() == src) it.remove();
+			}
+		} else if (tag.equals("ack"))
+			numAcks++;
+		notifyAll();
+	}
+	
+	private void sendMsg(String string, int dest, int value) {
 		  try {
 			linker.sendMsg(all_servers, "release", Integer.toString(c.getValue()));
 		} catch (ClassNotFoundException e) {
@@ -124,7 +147,6 @@ public class TCPServerThread extends Thread {
 			  DataOutputStream outToServer = new DataOutputStream(soc.getOutputStream());
 			  out.writeUTF("Client\n");
 			  out.writeUTF(string + value);
-		
 	}
 	public void run() {
 		System.out.println("TCP Thread Started");
@@ -151,7 +173,7 @@ public class TCPServerThread extends Thread {
 	}
 	
 	private void Client() {
-		System.out.println("Started Client Function");
+		//System.out.println("Started Client Function");
 		while(true){
 			try {
 			    String client_str;
@@ -162,22 +184,33 @@ public class TCPServerThread extends Thread {
 						request[i] = request[i].replaceAll("\\P{Print}", "");
 					}
 			        String reply = null;
-			        requestInventoryAccess(new Timestamp(c.getValue(),myId));
-			        if (request[0].equals(commands[0])) {
-						reply = new String(iv.purchase(request));
-					} else if (request[0].equals(commands[1])){
-						reply = new String(iv.cancel(Integer.parseInt(request[1])));
-					} else if (request[0].equals(commands[2])){
-						reply = new String(iv.search(request[1]));
-					} else if (request[0].equals(commands[3])){
-						reply = new String(iv.list());
-					}
+			        //requestInventoryAccess(new Timestamp(c.getValue(),myId));
+			        try {
+				        if (request[0].equals(commands[0])) {
+				        	String req = "";
+				        	for (String s:request){
+				        		req += s+" ";
+				        	}
+							reply = allPurchase(req);
+						} else if (request[0].equals(commands[1])){
+							reply = allCancel(request[1]);
+						} else if (request[0].equals(commands[2])){
+							reply = allSearch(request[1]);
+						} else if (request[0].equals(commands[3])){
+							reply = new String(allList());
+						}
+			        } catch(Exception e) {System.out.println("oops, TCPServerThread line 118");
+			        	e.printStackTrace();
+			        }
 			        if(reply != null){
-						finishedUsingInventory();
+						//finishedUsingInventory();
 					}
-			        out.writeUTF(reply + "\n");
+			        System.out.println(reply);
+			        if (reply != null) {
+			        	out.writeUTF(reply + "\n");
+			        }
 			    }
-			}catch (IOException | InterruptedException e){e.printStackTrace();}
+			}catch (IOException e){e.printStackTrace();}
 		}
 		
 	}
@@ -185,5 +218,56 @@ public class TCPServerThread extends Thread {
 	private void Server() {
 		System.out.println("Server Contact");
 	}
-
+	
+	
+	public String allPurchase(String req){
+		String reply = null;
+		for (RemoteInventory ri : inventories){
+			try {
+				if(reply == null) {reply = ri.purchase(req);}
+				else {ri.purchase(req);}
+			}catch(Exception e){}
+		}
+		return reply;
+	}
+	
+	public String allCancel(String req) {
+		String reply = null;
+		try{
+			for (RemoteInventory ri : inventories){
+				if(reply == null) {reply = ri.cancel(req);}
+				else {ri.cancel(req);}
+			}
+		}catch(Exception e){}
+		return reply;
+	}
+	
+	public String allSearch(String req){
+		String reply = null;
+		try{
+			for (RemoteInventory ri : inventories){
+				if(reply == null) {reply = ri.search(req);}
+				else {ri.search(req);}
+			}
+		}catch(Exception e) {}
+		return reply;
+	}
+	
+	public String allList() {
+		String reply = null;
+		try{
+			for (RemoteInventory ri : inventories) {
+				if (reply == null) {reply = ri.list();}
+				else{ri.list();}
+			}
+		} catch(Exception e){}
+		
+		return reply;
+	}
+	
+	
 }
+
+
+
+
