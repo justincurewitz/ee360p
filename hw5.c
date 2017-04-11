@@ -17,6 +17,8 @@ int decomp(int i, int size, int rows)
 }
 
 
+
+
 int main(int argc, char** argv){
 	MPI_Status status;
 	const int MAX_NUMBERS = 100;
@@ -103,7 +105,7 @@ int main(int argc, char** argv){
 
 	 for(int y = 0; y < num_rows; y++){
 	 	int proc = decomp(y,world_size,num_rows);
-	 	MPI_Send(a[y],columns,MPI_INT,proc,(100*(y+1)),MPI_COMM_WORLD);
+	 	MPI_Send(a[y],columns,MPI_INT,proc,(89*(y+1)),MPI_COMM_WORLD);
 	 	printf("sent matrix data to %d\n",proc);
 	 }
 
@@ -120,6 +122,7 @@ int main(int argc, char** argv){
      fclose(mfile);
      fclose(vfile);
     } else { // FOR EVERY OTHER process
+    	MPI_Request request;
 		MPI_Probe(0, 69, MPI_COMM_WORLD, &status);
 		MPI_Get_count(&status, MPI_INT, &counter1);
 		int* number_buf = (int*)malloc(sizeof(int) * counter1);
@@ -128,20 +131,18 @@ int main(int argc, char** argv){
 			//printf("i,size,num_rows: %d, %d, %d\n", i, world_size, counter1);
 			int pid = decomp(i,world_size,counter1);
 			//printf("wr: %d, pid: %d\n", world_rank, pid);
-			MPI_Probe(0, (100*(i+1)), MPI_COMM_WORLD, &status);
+			MPI_Probe(0, (89*(i+1)), MPI_COMM_WORLD, &status);
 			MPI_Get_count(&status, MPI_INT, &columns);
 			int* nbuf = (int*)malloc(sizeof(int) * (columns+1));
-			printf("b4: pid:%d,wr:%d\n",pid,world_rank);
-			if(world_rank == pid){
-				printf("after: pid:%d,wr:%d\n",pid,world_rank);
-				MPI_Recv(nbuf,(columns+1),MPI_INT,0,(100*(i+1)), MPI_COMM_WORLD, &status);
+			if(pid == world_rank){
+				MPI_Recv(nbuf,(columns+1),MPI_INT,0,(89*(i+1)), MPI_COMM_WORLD, &status);
 				int sum = 0;
 				for(int j = 0; j < columns; j++){
 					printf("nbuf[%d]: %d\n",j, nbuf[j]);
 					sum = sum + (number_buf[j]*nbuf[j]);
 				}
 				MPI_Send(&sum,1,MPI_INT,0,i,MPI_COMM_WORLD);
-			}
+			}			
 		}
 		free(number_buf);
 
