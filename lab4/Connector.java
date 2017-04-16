@@ -1,89 +1,50 @@
-
-import java.util.*;import java.net.*;import java.io.*;
+import java.util.*;
+import java.net.*;
+import java.io.*;
 
 public class Connector {
-	ServerSocket listener; 
-	Socket[] link;
-	public ObjectInputStream[] dataIn;
+	
+	public byte[] dataIn;
 	public ObjectOutputStream[] dataOut;
-	//Name myNameclient;
-	static ArrayList<Server> all_serv;
-	public void Connect(String basename, int myId, ArrayList<Server> allser, ServerSocket ss)
-			throws Exception {
-		int numNeigh = allser.size();
-		link = new Socket[numNeigh];
-		dataIn = new ObjectInputStream[numNeigh];
-		dataOut = new ObjectOutputStream[numNeigh];
-		all_serv = allser;
-		int localport = getLocalPort(myId);
-		listener = ss;
-		/* register my name in the name server */
-		//myNameclient.insertName(basename + myId, (InetAddress.getLocalHost()) .getHostName(), localport);
-		/* accept connections from all the smaller processes */
+	MulticastSocket ms;
+	
+	public Connector(MulticastSocket multisoc){
+		ms = multisoc;
 	}
-	int getLocalPort(int id) {
-		for(Server se: all_serv){
-			if(se.myId == id){
-				return se.port_number;
-			}
-		}
-		return -1;
+	public void connect(InetAddress group) throws Exception {
+		ms.joinGroup(group);
 	}
-	static InetSocketAddress getAddressFromID(int id){
-		for(Server se: all_serv){
-			if(se.myId == id){
-				return InetSocketAddress.createUnresolved(se.ip_string, se.port_number);
-			}
-		}
-		return null;
-	}
-	public void broadcastMessagesToNeighbors(Socket s, List<Integer> neighbors,int myId, Object ... objects) throws IOException,ClassNotFoundException{
-		for (int neighbor : neighbors) {
-			InetSocketAddress addr = getAddressFromID(neighbor);
-			int i = neighbors.indexOf(neighbor);
-			link[i] = new Socket(addr.getHostName(), addr.getPort());
-			dataOut[i] = new ObjectOutputStream(link[i].getOutputStream());
-			/* send a hello message to P_i */
-			//dataOut[i].writeObject(new Integer(myId));
-			//dataOut[i].writeObject(new String("inventory_state"));
-			//int j = neighbors.indexOf(destId);
-			try {
-				LinkedList<Object> objectList = Util.getLinkedList(objects);
-				ObjectOutputStream os = dataOut[i];
-				os.writeObject(Integer.valueOf(objectList.size()));
-				for (Object object : objectList) 
-					os.writeObject(object);
-				os.flush();
-			} catch (IOException e) {System.out.println(e);	
-			}
-			// change what we send out
-			dataOut[i].flush();
-			//dataIn[i]=new ObjectInputStream(link[i].getInputStream());
+	public void broadcastMessage(String msg,InetAddress group, int port){
+		DatagramPacket packet = new DatagramPacket(msg.getBytes(),msg.length(),group,port);
+		try {
+			ms.send(packet);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
 	}
-	
-	public ObjectInputStream[] getMessagesFromNeighbors(Socket s, List<Integer> neighbors) throws IOException, ClassNotFoundException{
-		for(int neighbor: neighbors){
-			s = listener.accept();
-			InputStream is = s.getInputStream();
-			ObjectInputStream din = new ObjectInputStream(is);
-			Integer hisId = (Integer) din.readObject();
-			int i = neighbors.indexOf(hisId);
-			String tag = (String) din.readObject();
-			if (tag.equals("inventory_state")) {
-				link[i] = s;
-				dataIn[i] = din;
-				//dataOut[i] = new ObjectOutputStream(s.getOutputStream()); // we dont need output here
-		    }
-			
+	public byte[] receiveMessage(){
+		dataIn = new byte[10000];
+		DatagramPacket recv = new DatagramPacket(dataIn, dataIn.length);
+		try {
+			ms.receive(recv);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return dataIn;
 	}
+	public void leaveGroup(InetAddress group){
+		try {
+			ms.leaveGroup(group);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void closeSockets() {
 		try {
-			listener.close();
-			for (Socket s : link) s.close();
+			ms.close();
 		} catch (Exception e) { System.err.println(e); }
 	}
 }

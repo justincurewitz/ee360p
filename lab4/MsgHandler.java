@@ -7,7 +7,7 @@ public interface MsgHandler extends Remote {
 	public void init(MsgHandler app);
 	public void close();
 	public int getMyId();	
-	public List<Integer> getNeighbors();
+	public List<String> getNeighbors();
 	public void turnPassive();
 	public Properties getProp();	
    }

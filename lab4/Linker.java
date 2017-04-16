@@ -1,8 +1,6 @@
 import java.util.*; import java.io.*;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.UnknownHostException;
 public class Linker implements MsgHandler {
 	public int myId;	
@@ -11,62 +9,74 @@ public class Linker implements MsgHandler {
 	MsgHandler app = null;// upper layer
 	MsgHandler comm = null;// lower layer
 	public boolean appFinished = false;
-	public List<Integer> neighbors = new ArrayList<Integer>();
-	public ArrayList<Server> all_servers = new ArrayList<Server>();
+	public List<String> neighbors = new ArrayList<String>();	
 	public Properties prop = new Properties();
+	MulticastSocket multisocket;
 	String ipstr;
 	int port;
-	ServerSocket sersock;
 	public Linker (String args[]) throws Exception { 
 		super();
 	}
-	public Linker(String ip_string, int id,int port,ArrayList<Server> allser) throws Exception{
+	public Linker(String ip_string, int id, int numProc,int port) throws Exception{
 		myId = id;
-		all_servers = allser;
-		n = all_servers.size();
+		n = numProc;
 		ipstr = ip_string;
 		this.port = port;
-		
 		// reads the neighbors from a file called topologyi
 		Topology.readNeighbors(myId, neighbors);
-		for(Server s: all_servers){
-			if(s.myId == myId){
-				sersock = s.ss;
-			}
+		for(String s: neighbors){
+			String ip_addr = s.split(":")[0];
+			String port_str = s.split(":")[1];
+			InetAddress group = InetAddress.getByName(ip_addr);
+			multisocket = new MulticastSocket(Integer.parseInt(port_str));
+			connector = new Connector(multisocket);
+			connector.connect(group);
 		}
-		connector = new Connector();
-		connector.Connect(ipstr, myId, all_servers,sersock);
 		
 	}
 	public void init(MsgHandler app){
 		this.app = app;	
-		for (int pid : neighbors)
-			(new ListenerThread(pid, this)).start();		    	
+		for (String pid : neighbors)
+			(new ListenerThread(Integer.parseInt(pid), this)).start();		    	
 	}
 	public Msg receiveMsg() {
-		return null;
+		try {
+			byte[] recvdMessage = connector.receiveMessage();
+			return new Msg(myId, recvdMessage);
+		} catch (Exception e) { System.out.println(e);
+			close(); return null;		
+		}
+
+	}
+	public void broadcastMsg(String s) throws UnknownHostException{
+		InetAddress group = InetAddress.getByName(ipstr);
+		connector.broadcastMessage(s, group, port);
+		
 	}
 	/*
 	 * Everything after this is only done to satisfy MsgHandler
 	 * */
+	public void sendMsg(int destId, Object ... objects) {	
+			int j = neighbors.indexOf(destId);
+			try {
+				LinkedList<Object> objectList = Util.getLinkedList(objects);
+				ObjectOutputStream os = connector.dataOut[j];
+				os.writeObject(Integer.valueOf(objectList.size()));
+				for (Object object : objectList) 
+					os.writeObject(object);
+				os.flush();
+			} catch (IOException e) {System.out.println(e);close();	}
+	}
 	
-	public void sendMsg(ArrayList<Server> s, Object ... objects) throws ClassNotFoundException, UnknownHostException, IOException {	
-		connector.broadcastMessagesToNeighbors(new Socket(ipstr,port), neighbors, myId,  objects);
-    }
 	
 	public Msg receiveMsg(int fromId) {
-		int i = neighbors.indexOf(fromId);
 		try {
-			ObjectInputStream oi = connector.getMessagesFromNeighbors(new Socket(ipstr,port), neighbors)[myId];
-			int numItems = ((Integer) oi.readObject()).intValue();
-			LinkedList<Object> recvdMessage = new LinkedList<Object>();
-			for (int j = 0; j < numItems; j++) 
-				recvdMessage.add(oi.readObject());
-			String tag = (String) recvdMessage.removeFirst();
-			return new Msg(fromId, myId, tag, recvdMessage);
+			byte[] recvdMessage = connector.receiveMessage();
+			return new Msg(fromId, myId, recvdMessage);
 		} catch (Exception e) { System.out.println(e);
 			close(); return null;		
 		}
+
 	}
 	public synchronized void handleMsg(Msg m, int src, String tag) { }
 	public synchronized void executeMsg(Msg m) {	
@@ -76,7 +86,7 @@ public class Linker implements MsgHandler {
 	}
 	public synchronized int getMyId() { return myId; }
 	public Properties getProp() { return prop;}
-	public List<Integer> getNeighbors() { return neighbors; }
+	public List<String> getNeighbors() { return neighbors; }
 	public void close() { appFinished = true; connector.closeSockets(); }
 	public void turnPassive() {	}
 	@Override
