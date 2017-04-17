@@ -1,0 +1,7 @@
+3
+localhost:8000
+localhost:8002
+localhost:8004
+purchase bob xbox 1
+list
+quit
