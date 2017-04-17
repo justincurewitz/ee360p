@@ -3,6 +3,7 @@
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.io.*;
 
@@ -18,11 +19,14 @@ public class TCPServerThread extends Thread {
 	int myId;
 	ArrayList<Server> neighbors = new ArrayList<Server>();
 	ArrayList<RemoteInventory> inventories;
-	public TCPServerThread(Socket s, ArrayList<RemoteInventory> ivs) {
+	public TCPServerThread(Socket s, ArrayList<RemoteInventory> ivs, int id) {
 		this.s = s;
 		//this.iv = iv;
 		//neighbors = server_list;
+		c = new LamportClock();
 		inventories = ivs;
+		myId = id;
+		requestQueue = new PriorityQueue<Timestamp>();
 		try {
 			in = new BufferedReader(new InputStreamReader(this.s.getInputStream()));
 			out = new DataOutputStream(this.s.getOutputStream());
@@ -116,7 +120,8 @@ public class TCPServerThread extends Thread {
 						} else if (request[0].equals(commands[3])){
 							reply = new String(allList());
 						}
-			        } catch(Exception e) {System.out.println("oops, TCPServerThread line 118");
+			        } catch(Exception e) {
+			        	System.out.println("oops, TCPServerThread line 118");
 			        	e.printStackTrace();
 			        }
 			        if(reply != null){
@@ -138,6 +143,13 @@ public class TCPServerThread extends Thread {
 	
 	
 	public String allPurchase(String req){
+		try {
+			System.out.println(this != null);
+			System.out.println(c != null);
+			requestInventoryAccess(new Timestamp(c.getValue(),this.myId));
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		String reply = null;
 		for (RemoteInventory ri : inventories){
 			try {
@@ -145,10 +157,16 @@ public class TCPServerThread extends Thread {
 				else {ri.purchase(req);}
 			}catch(Exception e){}
 		}
+		finishedUsingInventory();
 		return reply;
 	}
 	
 	public String allCancel(String req) {
+		try {
+			requestInventoryAccess(new Timestamp(c.getValue(),this.myId));
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		String reply = null;
 		try{
 			for (RemoteInventory ri : inventories){
@@ -156,10 +174,16 @@ public class TCPServerThread extends Thread {
 				else {ri.cancel(req);}
 			}
 		}catch(Exception e){}
+		finishedUsingInventory();
 		return reply;
 	}
 	
 	public String allSearch(String req){
+		try {
+			requestInventoryAccess(new Timestamp(c.getValue(),this.myId));
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		String reply = null;
 		try{
 			for (RemoteInventory ri : inventories){
@@ -167,10 +191,16 @@ public class TCPServerThread extends Thread {
 				else {ri.search(req);}
 			}
 		}catch(Exception e) {}
+		finishedUsingInventory();
 		return reply;
 	}
 	
 	public String allList() {
+		try {
+			requestInventoryAccess(new Timestamp(c.getValue(),this.myId));
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		String reply = null;
 		try{
 			for (RemoteInventory ri : inventories) {
@@ -178,7 +208,7 @@ public class TCPServerThread extends Thread {
 				else{ri.list();}
 			}
 		} catch(Exception e){}
-		
+		finishedUsingInventory();
 		return reply;
 	}
 	

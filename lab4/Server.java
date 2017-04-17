@@ -113,7 +113,7 @@ public class Server {
     	System.out.println("Awaiting new connection request");
     	Socket cSocket = ss.accept();
     	System.out.println("New Connection at port:" + cSocket.getPort());
-    	new TCPServerThread(cSocket, s.inventories).start();
+    	new TCPServerThread(cSocket, s.inventories, s.myID).start();
     }
   }
   
